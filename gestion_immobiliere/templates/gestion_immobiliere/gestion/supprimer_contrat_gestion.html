@@ -1,0 +1,95 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/gestion/supprimer_contrat_gestion.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+
+{% block title %}Supprimer le contrat - TECH IIBS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Supprimer le contrat de gestion</h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-file-contract fa-4x text-danger mb-3"></i>
+                        <h5>Supprimer le contrat #{{ contrat.id }} ?</h5>
+                    </div>
+                    
+                    <!-- Informations du contrat -->
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Détails du contrat</h6>
+                        <p class="mb-1"><strong>Logement:</strong> {{ contrat.logement.reference }}</p>
+                        <p class="mb-1"><strong>Propriétaire:</strong> {{ contrat.proprietaire.nom_complet }}</p>
+                        <p class="mb-1"><strong>Période:</strong> {{ contrat.date_debut|date:"d/m/Y" }} - {{ contrat.date_fin|date:"d/m/Y" }}</p>
+                        <p class="mb-1"><strong>Montant:</strong> {{ contrat.montant_mensuel|floatformat:2 }} FCFA/mois</p>
+                        <p class="mb-0"><strong>État:</strong> {{ contrat.get_etat_display }}</p>
+                    </div>
+                    
+                    <!-- Impacts potentiels -->
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle"></i> Impacts de la suppression</h6>
+                        <ul class="mb-0">
+                            <li>Le logement ne sera plus géré par l'agence</li>
+                            {% if contrat.contrats_location.exists %}
+                            <li class="text-danger">
+                                <i class="fas fa-exclamation-circle"></i>
+                                Contrats de location associés : {{ contrat.contrats_location.count }}
+                            </li>
+                            {% endif %}
+                            {% if contrat.paiements_proprietaire.exists %}
+                            <li>Historique de paiements sera conservé</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    
+                    <!-- Alternative à la suppression -->
+                    <div class="alert alert-success">
+                        <h6><i class="fas fa-lightbulb"></i> Alternative recommandée</h6>
+                        <p class="mb-2">
+                            Au lieu de supprimer, vous pouvez :
+                        </p>
+                        <ul class="mb-0">
+                            <li>Mettre le contrat en état "Terminé"</li>
+                            <li>Mettre le contrat en état "Annulé"</li>
+                            <li>Modifier les dates de fin</li>
+                        </ul>
+                        <div class="mt-2">
+                            <a href="{% url 'modifier_contrat_gestion' contrat.pk %}" class="btn btn-sm btn-outline-success">
+                                <i class="fas fa-edit"></i> Modifier le contrat
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Formulaire de confirmation -->
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="confirmation" class="form-label">
+                                Tapez "CONFIRMER" pour supprimer
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="confirmation" 
+                                   name="confirmation" 
+                                   required
+                                   pattern="CONFIRMER"
+                                   title='Tapez "CONFIRMER" en majuscules'>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="fas fa-trash"></i> Supprimer le contrat
+                            </button>
+                            <a href="{% url 'gerer_contrats_gestion' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

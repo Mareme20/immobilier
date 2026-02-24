@@ -1,0 +1,268 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/client/mes_demandes.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+{% load custom_filters %}
+
+{% block title %}Mes demandes - TECH IIBS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <!-- En-tête -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h2 mb-0">
+                        <i class="fas fa-list text-primary"></i> Mes demandes de location
+                    </h1>
+                    <p class="text-muted mb-0">
+                        Suivez l'état de vos demandes de location
+                    </p>
+                </div>
+                <a href="{% url 'catalogue' %}" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Nouvelle recherche
+                </a>
+            </div>
+
+            <!-- Filtres -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <select class="form-select" id="filterEtat">
+                                <option value="">Tous les états</option>
+                                <option value="attente">En attente</option>
+                                <option value="validee">Validée</option>
+                                <option value="rejetee">Rejetée</option>
+                                <option value="annulee">Annulée</option>
+                                <option value="convertie">Convertie en contrat</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="date" class="form-control" id="filterDate" placeholder="Date de demande">
+                        </div>
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="filterSearch" placeholder="Rechercher par référence...">
+                                <button class="btn btn-outline-secondary" type="button" id="btnReset">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Liste des demandes -->
+            <div class="card">
+                <div class="card-body p-0">
+                    {% if demandes %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Référence</th>
+                                    <th>Logement</th>
+                                    <th>Date demande</th>
+                                    <th>Date début souhaitée</th>
+                                    <th>Durée</th>
+                                    <th>État</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for demande in demandes %}
+                                <tr data-etat="{{ demande.etat }}" 
+                                    data-date="{{ demande.date_demande|date:'Y-m-d' }}"
+                                    data-reference="{{ demande.logement.reference }}">
+                                    <td>
+                                        <strong>{{ demande.logement.reference }}</strong>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% with demande.logement.images.first as image %}
+                                            {% if image %}
+                                            <img src="{{ image.image.url }}" 
+                                                 class="rounded me-2" 
+                                                 alt="{{ demande.logement.reference }}"
+                                                 style="width: 40px; height: 40px; object-fit: cover;">
+                                            {% else %}
+                                            <div class="bg-light rounded d-flex align-items-center justify-content-center me-2" 
+                                                 style="width: 40px; height: 40px;">
+                                                <i class="fas fa-home text-muted"></i>
+                                            </div>
+                                            {% endif %}
+                                            {% endwith %}
+                                            <div>
+                                                <div class="small">{{ demande.logement.get_type_logement_display }}</div>
+                                                <div class="text-muted xsmall">{{ demande.logement.zone.nom }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {{ demande.date_demande|date:"d/m/Y" }}
+                                        <div class="text-muted xsmall">{{ demande.date_demande|date:"H:i" }}</div>
+                                    </td>
+                                    <td>{{ demande.date_debut_souhaitee|date:"d/m/Y" }}</td>
+                                    <td>{{ demande.duree_souhaitee }} mois</td>
+                                    <td>
+                                        {% if demande.etat == 'attente' %}
+                                        <span class="badge bg-warning">En attente</span>
+                                        {% elif demande.etat == 'validee' %}
+                                        <span class="badge bg-success">Validée</span>
+                                        {% elif demande.etat == 'rejetee' %}
+                                        <span class="badge bg-danger">Rejetée</span>
+                                        {% elif demande.etat == 'annulee' %}
+                                        <span class="badge bg-secondary">Annulée</span>
+                                        {% elif demande.etat == 'convertie' %}
+                                        <span class="badge bg-info">Contrat créé</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'logement_detail' demande.logement.reference %}" 
+                                               class="btn btn-outline-primary"
+                                               title="Voir le logement">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            
+                                            {% if demande.etat == 'attente' %}
+                                            <button type="button" 
+                                                    class="btn btn-outline-danger" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#annulerModal{{ demande.id }}"
+                                                    title="Annuler la demande">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                            {% endif %}
+                                            
+                                            {% if demande.etat == 'validee' %}
+                                            <span class="btn btn-outline-success disabled" title="Rendez-vous a fixer avec l'agence">
+                                                <i class="fas fa-calendar-check"></i>
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Modal d'annulation -->
+                                        {% if demande.etat == 'attente' %}
+                                        <div class="modal fade" id="annulerModal{{ demande.id }}" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Annuler la demande</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p>Êtes-vous sûr de vouloir annuler votre demande pour le logement <strong>{{ demande.logement.reference }}</strong> ?</p>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Non</button>
+                                                        <form method="post" action=" ">
+                                                            {% csrf_token %}
+                                                            <button type="submit" class="btn btn-danger">Oui, annuler</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="text-muted small">
+                                {{ demandes.count }} demande{{ demandes.count|pluralize }}
+                            </div>
+                            <div>
+                                <span class="badge bg-warning me-2">En attente: {{ demandes|filterby:"etat:attente"|length }}</span>
+                                <span class="badge bg-success me-2">Validées: {{ demandes|filterby:"etat:validee"|length }}</span>
+                                <span class="badge bg-danger">Rejetées: {{ demandes|filterby:"etat:rejetee"|length }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Aucune demande</h5>
+                        <p class="text-muted mb-4">Vous n'avez pas encore fait de demande de location.</p>
+                        <a href="{% url 'catalogue' %}" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Chercher un logement
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filtrage en JavaScript
+        const filterEtat = document.getElementById('filterEtat');
+        const filterDate = document.getElementById('filterDate');
+        const filterSearch = document.getElementById('filterSearch');
+        const btnReset = document.getElementById('btnReset');
+        const rows = document.querySelectorAll('tbody tr');
+        
+        function filterRows() {
+            const etatValue = filterEtat.value;
+            const dateValue = filterDate.value;
+            const searchValue = filterSearch.value.toLowerCase();
+            
+            rows.forEach(row => {
+                const rowEtat = row.getAttribute('data-etat');
+                const rowDate = row.getAttribute('data-date');
+                const rowReference = row.getAttribute('data-reference').toLowerCase();
+                
+                let showRow = true;
+                
+                // Filtrer par état
+                if (etatValue && rowEtat !== etatValue) {
+                    showRow = false;
+                }
+                
+                // Filtrer par date
+                if (dateValue && rowDate !== dateValue) {
+                    showRow = false;
+                }
+                
+                // Filtrer par recherche
+                if (searchValue && !rowReference.includes(searchValue)) {
+                    showRow = false;
+                }
+                
+                row.style.display = showRow ? '' : 'none';
+            });
+        }
+        
+        // Écouteurs d'événements
+        filterEtat.addEventListener('change', filterRows);
+        filterDate.addEventListener('change', filterRows);
+        filterSearch.addEventListener('input', filterRows);
+        
+        btnReset.addEventListener('click', function() {
+            filterEtat.value = '';
+            filterDate.value = '';
+            filterSearch.value = '';
+            filterRows();
+        });
+        
+        // Initialiser les filtres depuis l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const etatParam = urlParams.get('etat');
+        if (etatParam) {
+            filterEtat.value = etatParam;
+        }
+        
+        filterRows(); // Appliquer les filtres initiaux
+    });
+</script>
+{% endblock %}

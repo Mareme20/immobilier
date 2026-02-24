@@ -1,0 +1,116 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/responsable_location/rejeter_demande.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+
+{% block title %}Rejeter la demande - TECH IIBS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0"><i class="fas fa-times-circle"></i> Rejeter la demande #{{ demande.id }}</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Résumé de la demande -->
+                    <div class="alert alert-warning mb-4">
+                        <h5><i class="fas fa-exclamation-triangle"></i> Vous êtes sur le point de rejeter cette demande</h5>
+                        <p class="mb-1"><strong>Client:</strong> {{ demande.client.nom_complet }}</p>
+                        <p class="mb-1"><strong>Logement:</strong> {{ demande.logement.reference }}</p>
+                        <p class="mb-0"><strong>Date demande:</strong> {{ demande.date_demande|date:"d/m/Y H:i" }}</p>
+                    </div>
+
+                    <!-- Formulaire de rejet -->
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="motif" class="form-label">
+                                <i class="fas fa-comment-dots"></i> Motif du rejet *
+                            </label>
+                            <textarea name="motif" 
+                                      id="motif" 
+                                      class="form-control" 
+                                      rows="4"
+                                      placeholder="Expliquez la raison du rejet de cette demande..."
+                                      required></textarea>
+                            <small class="form-text text-muted">
+                                Ce motif sera visible par le client.
+                            </small>
+                        </div>
+
+                        <!-- Modèles de motifs -->
+                        <div class="mb-4">
+                            <h6><i class="fas fa-lightbulb"></i> Modèles de motifs (optionnel)</h6>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-secondary" onclick="setMotif('Dossier incomplet')">
+                                    Dossier incomplet
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="setMotif('Revenus insuffisants')">
+                                    Revenus insuffisants
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="setMotif('Logement déjà loué')">
+                                    Logement déjà loué
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="setMotif('Autre raison')">
+                                    Autre raison
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Notification client -->
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       id="notify_client" 
+                                       name="notify_client" 
+                                       checked>
+                                <label class="form-check-label" for="notify_client">
+                                    <i class="fas fa-envelope"></i> Envoyer une notification au client
+                                </label>
+                            </div>
+                            <small class="form-text text-muted">
+                                Le client recevra un email l'informant du rejet de sa demande.
+                            </small>
+                        </div>
+
+                        <!-- Confirmation -->
+                        <div class="alert alert-danger">
+                            <div class="form-check">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       id="confirm_rejet" 
+                                       required>
+                                <label class="form-check-label" for="confirm_rejet">
+                                    Je confirme le rejet de cette demande de location.
+                                    Cette action mettra fin au processus pour ce client.
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="fas fa-times"></i> Rejeter définitivement
+                            </button>
+                            <a href="{% url 'traiter_demandes' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Retour aux demandes
+                            </a>
+                            <a href="{% url 'valider_demande' demande.id %}" class="btn btn-outline-success">
+                                <i class="fas fa-check"></i> Valider à la place
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function setMotif(motif) {
+        document.getElementById('motif').value = motif;
+    }
+</script>
+{% endblock %}

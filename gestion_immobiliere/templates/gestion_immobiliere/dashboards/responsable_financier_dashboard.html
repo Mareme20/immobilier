@@ -1,0 +1,137 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/dashboards/responsable_financier_dashboard.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+
+{% block title %}Dashboard Responsable Financier - TECH IIBS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h2 mb-1">
+                <i class="fas fa-chart-line text-primary"></i> Tableau de bord - Responsable Financier
+            </h1>
+            <p class="text-muted mb-0">Gestion financière et suivi des paiements</p>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Retards de paiement</h6>
+                            <p class="display-6 mb-0">{{ paiements_retard }}</p>
+                            <p class="mb-0">{{ montant_retards|floatformat:2 }} Fcfa</p>
+                        </div>
+                        <i class="fas fa-exclamation-triangle fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Paiements ce mois</h6>
+                            <p class="display-6 mb-0">{{ paiements_mois|floatformat:2 }} Fcfa</p>
+                            <p class="mb-0">Montant total</p>
+                        </div>
+                        <i class="fas fa-money-check-alt fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">À payer aux propriétaires</h6>
+                            <p class="display-6 mb-0">15 000 Fcfa</p>
+                            <p class="mb-0">Pour ce mois</p>
+                        </div>
+                        <i class="fas fa-university fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Retards de paiement -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Retards de paiement</h5>
+                </div>
+                <div class="card-body">
+                    {% if retards_liste %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Client</th>
+                                    <th>Logement</th>
+                                    <th>Mois</th>
+                                    <th>Montant</th>
+                                    <th>Jours retard</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for retard in retards_liste %}
+                                <tr>
+                                    <td>{{ retard.contrat_location.client.nom_complet }}</td>
+                                    <td>{{ retard.contrat_location.logement.reference }}</td>
+                                    <td>{{ retard.mois|date:"F Y" }}</td>
+                                    <td>{{ retard.montant|floatformat:2 }} FCFA</td>
+                                    <td><span class="badge bg-danger">{{ retard.jours_retard }} jours</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-success">Marquer payé</button>
+                                        <button class="btn btn-sm btn-warning">Relancer</button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-4">Aucun retard de paiement</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Paiements récents</h5>
+                </div>
+                <div class="card-body">
+                    {% if paiements_recents %}
+                    <div class="list-group">
+                        {% for paiement in paiements_recents %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ paiement.contrat_location.client.nom_complet }}</h6>
+                                <small>{{ paiement.date_paiement|date:"d/m" }}</small>
+                            </div>
+                            <p class="mb-1 small">{{ paiement.mois|date:"F Y" }}</p>
+                            <span class="badge bg-success">{{ paiement.montant|floatformat:2 }} FCFA</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-4">Aucun paiement récent</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

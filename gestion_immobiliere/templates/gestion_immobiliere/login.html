@@ -1,0 +1,54 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/login.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+
+{% block title %}Connexion - TECH IIBS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-sign-in-alt"></i> Connexion</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label">Nom d'utilisateur</label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                        <div class="text-danger">{{ form.username.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_password" class="form-label">Mot de passe</label>
+                        {{ form.password }}
+                        {% if form.password.errors %}
+                        <div class="text-danger">{{ form.password.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-sign-in-alt"></i> Se connecter
+                        </button>
+                        <a href="{% url 'register' %}" class="btn btn-link">
+                            Pas encore de compte ? S'inscrire
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Ajouter des classes Bootstrap aux champs du formulaire
+    document.getElementById('id_username').className = 'form-control';
+    document.getElementById('id_password').className = 'form-control';
+</script>
+{% endblock %}

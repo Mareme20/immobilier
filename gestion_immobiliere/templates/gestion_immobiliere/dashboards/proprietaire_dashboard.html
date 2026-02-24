@@ -1,0 +1,388 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/dashboards/proprietaire_dashboard.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+
+{% block title %}Dashboard Propriétaire - TECH IIBS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .revenue-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    .property-card {
+        border-radius: 10px;
+        overflow: hidden;
+        transition: transform 0.2s;
+        height: 100%;
+    }
+    .property-card:hover {
+        transform: translateY(-5px);
+    }
+    .payment-schedule {
+        border-left: 3px solid #0d6efd;
+        padding-left: 1rem;
+    }
+    .stat-badge {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- En-tête -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-1">
+                        <i class="fas fa-user-tie text-primary"></i> Tableau de bord - Propriétaire
+                    </h1>
+                    <p class="text-muted mb-0">Bienvenue, {{ proprietaire.nom_complet }}</p>
+                </div>
+                <div>
+                    <span class="stat-badge bg-primary text-white me-2">
+                        <i class="fas fa-id-card"></i> {{ proprietaire.numero_fiscal }}
+                    </span>
+                    <a href="#" class="btn btn-outline-primary">
+                        <i class="fas fa-cog"></i> Paramètres
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenus et statistiques -->
+    <div class="row mb-4">
+        <!-- Revenus mensuels -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card revenue-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1 opacity-75">Revenus mensuels</h6>
+                            <h2 class="mb-0">{{ revenus_mensuels|floatformat:2 }} FCFA</h2>
+                            <p class="mb-0 opacity-75">Total des loyers</p>
+                        </div>
+                        <div class="bg-white bg-opacity-25 rounded-circle p-3">
+                            <i class="fas fa-money-bill-wave fa-2x"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="d-flex justify-content-between small opacity-75">
+                            <span>Prochain paiement:</span>
+                            <span>05/{{ next_month|date:"m/Y" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistiques des biens -->
+        <div class="col-xl-8 mb-4">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <div class="display-6 text-primary mb-2">{{ total_logements }}</div>
+                            <h6 class="text-uppercase text-muted mb-0">Biens immobiliers</h6>
+                            <div class="mt-2">
+                                <span class="badge bg-success me-1">{{ logements_disponibles }} dispo.</span>
+                                <span class="badge bg-warning">{{ logements_loues }} loués</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <div class="display-6 text-success mb-2">{{ contrats_actifs.count }}</div>
+                            <h6 class="text-uppercase text-muted mb-0">Contrats actifs</h6>
+                            <div class="mt-2">
+                                <span class="badge bg-info">Gestion TECH IIBS</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <div class="display-6 text-warning mb-2">{{ demandes_mes_logements.count }}</div>
+                            <h6 class="text-uppercase text-muted mb-0">Demandes en attente</h6>
+                            <div class="mt-2">
+                                <a href="#" class="btn btn-sm btn-outline-warning">Voir</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-bolt"></i> Actions rapides</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2 col-6 mb-3">
+                            <a href="#" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-plus-circle fa-2x mb-2"></i>
+                                <div>Ajouter un bien</div>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-6 mb-3">
+                            <a href="#" class="btn btn-outline-success w-100">
+                                <i class="fas fa-file-invoice-dollar fa-2x mb-2"></i>
+                                <div>Mes paiements</div>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-6 mb-3">
+                            <a href="#" class="btn btn-outline-info w-100">
+                                <i class="fas fa-chart-line fa-2x mb-2"></i>
+                                <div>Statistiques</div>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-6 mb-3">
+                            <a href="#" class="btn btn-outline-warning w-100">
+                                <i class="fas fa-question-circle fa-2x mb-2"></i>
+                                <div>Support</div>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-6 mb-3">
+                            <a href="#" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-file-contract fa-2x mb-2"></i>
+                                <div>Mes contrats</div>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-6 mb-3">
+                            <a href="#" class="btn btn-outline-dark w-100">
+                                <i class="fas fa-cog fa-2x mb-2"></i>
+                                <div>Paramètres</div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenu principal -->
+    <div class="row">
+        <!-- Mes biens -->
+        <div class="col-xl-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-home text-primary"></i> Mes biens immobiliers</h5>
+                    <a href="#" class="btn btn-sm btn-outline-primary">Voir tout</a>
+                </div>
+                <div class="card-body">
+                    {% if proprietaire.logements.all %}
+                    <div class="row">
+                        {% for logement in proprietaire.logements.all|slice:":4" %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card property-card">
+                                <div class="position-relative">
+                                    {% with logement.images.first as image %}
+                                    {% if image %}
+                                    <img src="{{ image.image.url }}" 
+                                         class="card-img-top" 
+                                         alt="{{ logement.reference }}"
+                                         style="height: 120px; object-fit: cover;">
+                                    {% else %}
+                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                                         style="height: 120px;">
+                                        <i class="fas fa-home fa-2x text-muted"></i>
+                                    </div>
+                                    {% endif %}
+                                    {% endwith %}
+                                    <span class="position-absolute top-0 start-0 m-2 badge bg-{% if logement.etat == 'disponible' %}success{% else %}warning{% endif %}">
+                                        {{ logement.get_etat_display }}
+                                    </span>
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="card-title mb-1">{{ logement.reference }}</h6>
+                                    <p class="card-text small text-muted mb-2">
+                                        {{ logement.get_type_logement_display }} • {{ logement.zone.nom }}
+                                    </p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-light text-dark">
+                                            {{ logement.surface }} m²
+                                        </span>
+                                        <a href="#" class="btn btn-sm btn-outline-primary">Détails</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-home fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Vous n'avez pas encore de biens immobiliers</p>
+                        <a href="#" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Ajouter un bien
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Paiements à venir -->
+        <div class="col-xl-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-calendar-alt text-success"></i> Paiements à venir</h5>
+                    <a href="#" class="btn btn-sm btn-outline-success">Historique</a>
+                </div>
+                <div class="card-body">
+                    {% if paiements_a_venir %}
+                    <div class="payment-schedule">
+                        {% for paiement in paiements_a_venir %}
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">{{ paiement.contrat.logement.reference }}</h6>
+                                <span class="badge bg-success">{{ paiement.montant|floatformat:2 }} FCFA</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="small text-muted">
+                                    <i class="far fa-calendar"></i> 
+                                    Échéance: {{ paiement.date_limite|date:"d/m/Y" }}
+                                </div>
+                                <div class="small">
+                                    <span class="badge bg-light text-dark">
+                                        {{ paiement.contrat.logement.zone.nom }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="progress mt-2" style="height: 5px;">
+                                <div class="progress-bar bg-success" style="width: 75%"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-money-check-alt fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Aucun paiement à venir</p>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- RIB -->
+                    <div class="mt-4 pt-4 border-top">
+                        <h6><i class="fas fa-university"></i> Coordonnées bancaires</h6>
+                        <div class="alert alert-info small mb-0">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>RIB:</strong> {{ proprietaire.rib|default:"Non renseigné" }}
+                                </div>
+                                <button class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-edit"></i> Modifier
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Demandes pour mes logements -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-bell text-warning"></i> Demandes récentes pour vos logements</h5>
+                    <span class="badge bg-warning">{{ demandes_mes_logements.count }} nouvelles</span>
+                </div>
+                <div class="card-body">
+                    {% if demandes_mes_logements %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Client</th>
+                                    <th>Logement</th>
+                                    <th>Date demande</th>
+                                    <th>Date début souhaitée</th>
+                                    <th>Durée</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for demande in demandes_mes_logements %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0">
+                                                <i class="fas fa-user-circle fa-lg text-muted"></i>
+                                            </div>
+                                            <div class="flex-grow-1 ms-2">
+                                                <div class="fw-medium">{{ demande.client.nom_complet }}</div>
+                                                <div class="text-muted xsmall">{{ demande.client.telephone }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <strong>{{ demande.logement.reference }}</strong>
+                                        <div class="text-muted xsmall">{{ demande.logement.zone.nom }}</div>
+                                    </td>
+                                    <td>{{ demande.date_demande|date:"d/m/Y H:i" }}</td>
+                                    <td>{{ demande.date_debut_souhaitee|date:"d/m/Y" }}</td>
+                                    <td>{{ demande.duree_souhaitee }} mois</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-success" title="Accepter">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger" title="Refuser">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                            <button class="btn btn-outline-info" title="Détails">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-check-circle fa-2x text-muted mb-3"></i>
+                        <p class="text-muted">Aucune nouvelle demande pour vos logements</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Calculer le mois suivant pour l'affichage
+        const today = new Date();
+        const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 5);
+        document.querySelectorAll('.next-month').forEach(el => {
+            el.textContent = nextMonth.toLocaleDateString('fr-FR', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: 'numeric' 
+            });
+        });
+    });
+</script>
+{% endblock %}

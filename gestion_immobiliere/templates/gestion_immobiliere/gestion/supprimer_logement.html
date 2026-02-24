@@ -1,0 +1,77 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/gestion/supprimer_logement.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+
+{% block title %}Supprimer le logement - TECH IIBS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Confirmation de suppression</h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-trash-alt fa-4x text-danger mb-3"></i>
+                        <h5>Êtes-vous sûr de vouloir supprimer ce logement ?</h5>
+                    </div>
+                    
+                    <!-- Informations du logement -->
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-home"></i> Informations du logement</h6>
+                        <p class="mb-1"><strong>Référence:</strong> {{ logement.reference }}</p>
+                        <p class="mb-1"><strong>Type:</strong> {{ logement.get_type_logement_display }}</p>
+                        <p class="mb-1"><strong>Adresse:</strong> {{ logement.adresse }}</p>
+                        <p class="mb-1"><strong>Propriétaire:</strong> {{ logement.proprietaire.nom_complet }}</p>
+                    </div>
+                    
+                    <!-- Vérifications -->
+                    <div class="alert alert-danger">
+                        <h6><i class="fas fa-exclamation-circle"></i> Vérifications importantes</h6>
+                        <ul class="mb-0">
+                            <li>Cette action est <strong>irréversible</strong></li>
+                            <li>Toutes les images associées seront supprimées</li>
+                            {% if logement.contrat_gestion %}
+                            <li class="text-danger">
+                                <i class="fas fa-exclamation-triangle"></i> 
+                                ATTENTION : Ce logement a un contrat de gestion actif
+                            </li>
+                            {% endif %}
+                            {% if logement.demandes_location.exists %}
+                            <li>Les demandes de location associées seront affectées</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    
+                    <!-- Formulaire de confirmation -->
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="confirmation" class="form-label">
+                                Tapez "SUPPRIMER" pour confirmer
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="confirmation" 
+                                   name="confirmation" 
+                                   required
+                                   pattern="SUPPRIMER"
+                                   title='Tapez "SUPPRIMER" en majuscules'>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="fas fa-trash"></i> Supprimer définitivement
+                            </button>
+                            <a href="{% url 'gerer_logements' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

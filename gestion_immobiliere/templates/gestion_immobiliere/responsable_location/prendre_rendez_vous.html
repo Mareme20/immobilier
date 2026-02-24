@@ -1,0 +1,361 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/responsable_location/prendre_rendez_vous.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+
+{% block title %}Prendre un rendez-vous - TECH IIBS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .calendar-icon {
+        color: #0d6efd;
+        font-size: 1.2rem;
+    }
+    .time-slot {
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .time-slot:hover {
+        border-color: #0d6efd;
+        background-color: #f8f9fa;
+    }
+    .time-slot.selected {
+        border-color: #0d6efd;
+        background-color: #e7f1ff;
+    }
+    .time-display {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #0d6efd;
+    }
+    .availability-badge {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center">
+                <a href="{% url 'traiter_demandes' %}" class="btn btn-outline-secondary me-3">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div>
+                    <h1 class="h2 mb-0">
+                        <i class="fas fa-calendar-alt text-primary"></i> Prendre un rendez-vous
+                    </h1>
+                    <p class="text-muted mb-0">Demande #{{ demande.id }} • {{ demande.client.nom_complet }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-clock"></i> Planifier le rendez-vous</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Informations de la demande -->
+                    <div class="alert alert-info mb-4">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Client:</strong> {{ demande.client.nom_complet }}</p>
+                                <p class="mb-1"><strong>Logement:</strong> {{ demande.logement.reference }}</p>
+                                <p class="mb-1"><strong>Adresse:</strong> {{ demande.logement.adresse|truncatechars:40 }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Date souhaitée:</strong> {{ demande.date_debut_souhaitee|date:"d/m/Y" }}</p>
+                                <p class="mb-1"><strong>Durée souhaitée:</strong> {{ demande.duree_souhaitee }} mois</p>
+                                <p class="mb-0"><strong>Date validation:</strong> {{ demande.date_validation|date:"d/m/Y" }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post" id="rendezvousForm">
+                        {% csrf_token %}
+                        
+                        <!-- Date et heure -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_date_rendez_vous" class="form-label">
+                                        <i class="fas fa-calendar-day calendar-icon"></i> Date et heure *
+                                    </label>
+                                    {{ form.date_rendez_vous }}
+                                    {% if form.date_rendez_vous.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.date_rendez_vous.errors }}</div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">
+                                        Du lundi au vendredi, entre 9h et 18h
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_duree_estimee" class="form-label">
+                                        <i class="fas fa-hourglass-half calendar-icon"></i> Durée estimée *
+                                    </label>
+                                    {{ form.duree_estimee }}
+                                    {% if form.duree_estimee.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.duree_estimee.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lieu -->
+                        <div class="mb-3">
+                            <label for="id_lieu" class="form-label">
+                                <i class="fas fa-map-marker-alt calendar-icon"></i> Lieu de rendez-vous *
+                            </label>
+                            {{ form.lieu }}
+                            {% if form.lieu.errors %}
+                            <div class="invalid-feedback d-block">{{ form.lieu.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                Adresse exacte où se déroulera la visite
+                            </small>
+                        </div>
+
+                        <!-- Contact client -->
+                        <div class="mb-3">
+                            <label for="id_contact_client" class="form-label">
+                                <i class="fas fa-phone calendar-icon"></i> Téléphone client *
+                            </label>
+                            {{ form.contact_client }}
+                            {% if form.contact_client.errors %}
+                            <div class="invalid-feedback d-block">{{ form.contact_client.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="mb-4">
+                            <label for="id_notes" class="form-label">
+                                <i class="fas fa-sticky-note calendar-icon"></i> Notes (optionnel)
+                            </label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                            <div class="invalid-feedback d-block">{{ form.notes.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                Instructions particulières, points à vérifier, etc.
+                            </small>
+                        </div>
+
+                        <!-- Créneaux suggérés -->
+                        <div class="mb-4">
+                            <h6><i class="fas fa-bolt"></i> Créneaux suggérés</h6>
+                            <div class="row">
+                                {% with tomorrow=demande.date_debut_souhaitee|date:"Y-m-d" %}
+                                <div class="col-md-4">
+                                    <div class="time-slot" data-datetime="{{ tomorrow }}T09:00">
+                                        <div class="time-display">9h00</div>
+                                        <div class="text-muted small">Demain matin</div>
+                                        <span class="badge bg-success availability-badge">Disponible</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="time-slot" data-datetime="{{ tomorrow }}T14:00">
+                                        <div class="time-display">14h00</div>
+                                        <div class="text-muted small">Demain après-midi</div>
+                                        <span class="badge bg-success availability-badge">Disponible</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="time-slot" data-datetime="{{ tomorrow }}T16:30">
+                                        <div class="time-display">16h30</div>
+                                        <div class="text-muted small">Demain fin de journée</div>
+                                        <span class="badge bg-success availability-badge">Disponible</span>
+                                    </div>
+                                </div>
+                                {% endwith %}
+                            </div>
+                        </div>
+
+                        <!-- Instructions -->
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-info-circle"></i> Instructions importantes</h6>
+                            <ul class="mb-0">
+                                <li>Confirmez le rendez-vous par téléphone avec le client</li>
+                                <li>Préparez le contrat à l'avance</li>
+                                <li>Vérifiez l'état du logement avant la visite</li>
+                                <li>Prévoyez les clés et documents nécessaires</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-calendar-check"></i> Planifier le rendez-vous
+                            </button>
+                            <a href="{% url 'traiter_demandes' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informations complémentaires -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-home"></i> Informations logement</h5>
+                </div>
+                <div class="card-body">
+                    {% with demande.logement.images.first as image %}
+                    {% if image %}
+                    <img src="{{ image.image.url }}" 
+                         class="img-fluid rounded mb-3" 
+                         alt="{{ demande.logement.reference }}">
+                    {% endif %}
+                    {% endwith %}
+                    
+                    <h6>{{ demande.logement.reference }}</h6>
+                    <p class="small">{{ demande.logement.get_type_logement_display }} • {{ demande.logement.zone.nom }}</p>
+                    
+                    <div class="mb-3">
+                        <span class="badge bg-light text-dark me-1">
+                            {{ demande.logement.surface }} m²
+                        </span>
+                        <span class="badge bg-info text-white">
+                            {{ demande.logement.contrat_gestion.prix_loyer_total|floatformat:2 }} €/mois
+                        </span>
+                    </div>
+                    
+                    <p class="small">{{ demande.logement.adresse }}</p>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-user"></i> Informations client</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-user-circle fa-2x text-muted"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-0">{{ demande.client.nom_complet }}</h6>
+                            <p class="text-muted small mb-0">{{ demande.client.telephone }}</p>
+                        </div>
+                    </div>
+                    
+                    <p class="small mb-2">
+                        <strong>Profession:</strong> {{ demande.client.profession|default:"Non renseigné" }}
+                    </p>
+                    <p class="small mb-2">
+                        <strong>Employeur:</strong> {{ demande.client.employeur|default:"Non renseigné" }}
+                    </p>
+                    <p class="small mb-0">
+                        <strong>Revenu:</strong> {{ demande.client.revenu_mensuel|floatformat:2|default:"Non renseigné" }} €/mois
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ajouter classes Bootstrap
+        document.querySelectorAll('input, select, textarea').forEach(field => {
+            if (!field.classList.contains('form-control') && !field.classList.contains('form-select')) {
+                if (field.tagName === 'SELECT') {
+                    field.classList.add('form-select');
+                } else {
+                    field.classList.add('form-control');
+                }
+            }
+        });
+        
+        // Gestion des créneaux suggérés
+        document.querySelectorAll('.time-slot').forEach(slot => {
+            slot.addEventListener('click', function() {
+                const datetime = this.getAttribute('data-datetime');
+                document.getElementById('id_date_rendez_vous').value = datetime;
+                
+                // Mettre en évidence le créneau sélectionné
+                document.querySelectorAll('.time-slot').forEach(s => {
+                    s.classList.remove('selected');
+                });
+                this.classList.add('selected');
+            });
+        });
+        
+        // Validation du formulaire
+        const form = document.getElementById('rendezvousForm');
+        form.addEventListener('submit', function(event) {
+            const dateField = document.getElementById('id_date_rendez_vous');
+            const contactField = document.getElementById('id_contact_client');
+            const lieuField = document.getElementById('id_lieu');
+            
+            let isValid = true;
+            
+            // Validation des champs requis
+            [dateField, contactField, lieuField].forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+            
+            // Validation de la date (doit être dans le futur)
+            if (dateField.value) {
+                const selectedDate = new Date(dateField.value);
+                const now = new Date();
+                
+                if (selectedDate <= now) {
+                    alert('Le rendez-vous doit être dans le futur.');
+                    dateField.classList.add('is-invalid');
+                    isValid = false;
+                }
+                
+                // Validation jour ouvré (lundi-vendredi)
+                const dayOfWeek = selectedDate.getDay();
+                if (dayOfWeek === 0 || dayOfWeek === 6) {
+                    alert('Les rendez-vous se prennent du lundi au vendredi.');
+                    dateField.classList.add('is-invalid');
+                    isValid = false;
+                }
+                
+                // Validation heure de bureau (9h-18h)
+                const hour = selectedDate.getHours();
+                if (hour < 9 || hour >= 18) {
+                    alert('Les rendez-vous se prennent entre 9h et 18h.');
+                    dateField.classList.add('is-invalid');
+                    isValid = false;
+                }
+            }
+            
+            if (!isValid) {
+                event.preventDefault();
+                alert('Veuillez corriger les erreurs dans le formulaire.');
+            }
+        });
+        
+        // Pré-remplir avec demain 14h par défaut
+        const dateField = document.getElementById('id_date_rendez_vous');
+        if (!dateField.value) {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(14, 0, 0, 0);
+            
+            const formattedDate = tomorrow.toISOString().slice(0, 16);
+            dateField.value = formattedDate;
+        }
+    });
+</script>
+{% endblock %}

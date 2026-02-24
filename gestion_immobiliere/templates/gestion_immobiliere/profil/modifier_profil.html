@@ -1,0 +1,114 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/profil/modifier_profil.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+
+{% block title %}Modifier mon profil - TECH IIBS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="fas fa-user-edit"></i> Modifier mon profil</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Informations personnelles -->
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">Informations personnelles</h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Prénom</label>
+                                    {{ user_form.first_name }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Nom</label>
+                                    {{ user_form.last_name }}
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                {{ user_form.email }}
+                            </div>
+                        </div>
+                        
+                        <!-- Informations de contact -->
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">Informations de contact</h5>
+                            <div class="mb-3">
+                                <label class="form-label">Téléphone</label>
+                                {{ profile_form.telephone }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Adresse</label>
+                                {{ profile_form.adresse }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Date de naissance</label>
+                                {{ profile_form.date_naissance }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Photo de profil</label>
+                                {{ profile_form.avatar }}
+                                {% if user.profile.avatar %}
+                                <div class="mt-2">
+                                    <img src="{{ user.profile.avatar.url }}" 
+                                         alt="Photo actuelle" 
+                                         class="img-thumbnail"
+                                         style="max-height: 100px;">
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Informations spécifiques au propriétaire -->
+                        {% if proprietaire_form %}
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">Informations propriétaire</h5>
+                            <div class="mb-3">
+                                <label class="form-label">Numéro fiscal</label>
+                                {{ proprietaire_form.numero_fiscal }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">RIB</label>
+                                {{ proprietaire_form.rib }}
+                                <small class="form-text text-muted">Pour les paiements</small>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Boutons -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Enregistrer les modifications
+                            </button>
+                            <a href="{% url 'mon_profil' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ajouter des classes Bootstrap aux champs
+        document.querySelectorAll('input, select, textarea').forEach(field => {
+            if (!field.classList.contains('form-control') && !field.classList.contains('form-select')) {
+                if (field.tagName === 'SELECT') {
+                    field.classList.add('form-select');
+                } else {
+                    field.classList.add('form-control');
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,260 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/responsable_financier/gerer_paiements.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+{% load custom_filters %}
+
+{% block title %}Gérer les paiements - TECH IIBS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h2 mb-0">
+                <i class="fas fa-money-check-alt text-primary"></i> Gestion des paiements
+            </h1>
+            <p class="text-muted mb-0">{{ stats.total }} paiement{{ stats.total|pluralize }}</p>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Payés</h6>
+                            <p class="display-6 mb-0">{{ stats.payes }}</p>
+                            <p class="mb-0">{{ stats.montant_total|floatformat:2 }} FCFA</p>
+                        </div>
+                        <i class="fas fa-check-circle fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">En retard</h6>
+                            <p class="display-6 mb-0">{{ stats.retard }}</p>
+                            <p class="mb-0">{{ stats.montant_retard|floatformat:2 }} FCFA</p>
+                        </div>
+                        <i class="fas fa-exclamation-triangle fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Impayés</h6>
+                            <p class="display-6 mb-0">{{ stats.impayes }}</p>
+                            <p class="mb-0">À recouvrer</p>
+                        </div>
+                        <i class="fas fa-clock fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Taux recouvrement</h6>
+                            <p class="display-6 mb-0">
+                                {% if stats.total > 0 %}
+                                    {{ stats.payes|divisibleby:stats.total|multiply:100|floatformat:0 }}%
+                                {% else %}
+                                    0%
+                                {% endif %}
+                            </p>
+                            <p class="mb-0">Taux de réussite</p>
+                        </div>
+                        <i class="fas fa-chart-line fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row g-2">
+                        <div class="col-md-3">
+                            <select name="statut" class="form-select">
+                                <option value="">Tous statuts</option>
+                                <option value="paye" {% if request.GET.statut == 'paye' %}selected{% endif %}>Payé</option>
+                                <option value="en_retard" {% if request.GET.statut == 'en_retard' %}selected{% endif %}>En retard</option>
+                                <option value="impaye" {% if request.GET.statut == 'impaye' %}selected{% endif %}>Impayé</option>
+                                <option value="partiel" {% if request.GET.statut == 'partiel' %}selected{% endif %}>Partiel</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="month" name="mois" class="form-control" value="{{ request.GET.mois }}">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" name="search" class="form-control" placeholder="Rechercher client..." value="{{ request.GET.search }}">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search"></i> Filtrer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau des paiements -->
+    <div class="card">
+        <div class="card-body p-0">
+            {% if paiements %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Client</th>
+                            <th>Logement</th>
+                            <th>Mois</th>
+                            <th>Montant</th>
+                            <th>Date limite</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for paiement in paiements %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-user-circle fa-lg text-muted"></i>
+                                    </div>
+                                    <div class="flex-grow-1 ms-2">
+                                        <div class="fw-medium">{{ paiement.contrat_location.client.nom_complet }}</div>
+                                        <div class="text-muted xsmall">{{ paiement.contrat_location.client.telephone }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>{{ paiement.contrat_location.logement.reference }}</div>
+                                <div class="text-muted xsmall">{{ paiement.contrat_location.logement.zone.nom }}</div>
+                            </td>
+                            <td>{{ paiement.mois|date:"F Y" }}</td>
+                            <td>
+                                <strong>{{ paiement.montant|floatformat:2 }} FCFA</strong>
+                            </td>
+                            <td>
+                                <div>{{ paiement.date_limite|date:"d/m/Y" }}</div>
+                                {% if paiement.est_en_retard %}
+                                <span class="badge bg-danger xsmall">{{ paiement.jours_retard }} jours retard</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if paiement.statut == 'paye' %}
+                                <span class="badge bg-success">Payé</span>
+                                {% elif paiement.statut == 'en_retard' %}
+                                <span class="badge bg-danger">En retard</span>
+                                {% elif paiement.statut == 'impaye' %}
+                                <span class="badge bg-warning">Impayé</span>
+                                {% elif paiement.statut == 'partiel' %}
+                                <span class="badge bg-info">Partiel</span>
+                                {% endif %}
+                                
+                                {% if paiement.date_paiement %}
+                                <div class="text-muted xsmall">
+                                    {{ paiement.date_paiement|date:"d/m/Y" }}
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    {% if paiement.statut != 'paye' %}
+                                    <a href="{% url 'enregistrer_paiement' paiement.id %}" 
+                                       class="btn btn-outline-success" 
+                                       title="Enregistrer paiement">
+                                        <i class="fas fa-money-bill-wave"></i>
+                                    </a>
+                                    {% endif %}
+                                    
+                                    <button type="button" 
+                                            class="btn btn-outline-info"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#detailsModal{{ paiement.id }}"
+                                            title="Détails">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    
+                                    {% if paiement.statut == 'en_retard' %}
+                                    <button type="button" 
+                                            class="btn btn-outline-warning"
+                                            title="Relancer">
+                                        <i class="fas fa-bell"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Modal détails -->
+                                <div class="modal fade" id="detailsModal{{ paiement.id }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Détails du paiement</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p><strong>Client:</strong> {{ paiement.contrat_location.client.nom_complet }}</p>
+                                                <p><strong>Logement:</strong> {{ paiement.contrat_location.logement.reference }}</p>
+                                                <p><strong>Mois:</strong> {{ paiement.mois|date:"F Y" }}</p>
+                                                <p><strong>Montant:</strong> {{ paiement.montant|floatformat:2 }} FCFA</p>
+                                                <p><strong>Date limite:</strong> {{ paiement.date_limite|date:"d/m/Y" }}</p>
+                                                <p><strong>Statut:</strong> 
+                                                    <span class="badge bg-{% if paiement.statut == 'paye' %}success{% elif paiement.statut == 'en_retard' %}danger{% else %}warning{% endif %}">
+                                                        {{ paiement.get_statut_display }}
+                                                    </span>
+                                                </p>
+                                                
+                                                {% if paiement.date_paiement %}
+                                                <p><strong>Date paiement:</strong> {{ paiement.date_paiement|date:"d/m/Y H:i" }}</p>
+                                                <p><strong>Mode paiement:</strong> {{ paiement.get_mode_paiement_display|default:"Non renseigné" }}</p>
+                                                <p><strong>Référence:</strong> {{ paiement.reference_paiement|default:"Non renseigné" }}</p>
+                                                {% endif %}
+                                                
+                                                {% if paiement.notes %}
+                                                <p><strong>Notes:</strong> {{ paiement.notes }}</p>
+                                                {% endif %}
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-money-check-alt fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Aucun paiement trouvé</h5>
+                <p class="text-muted">Aucun paiement ne correspond à vos critères.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

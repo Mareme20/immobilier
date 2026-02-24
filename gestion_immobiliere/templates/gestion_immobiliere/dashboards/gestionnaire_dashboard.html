@@ -1,0 +1,411 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/dashboards/gestionnaire_dashboard.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+
+{% block title %}Dashboard Gestionnaire - TECH IIBS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        transition: transform 0.2s;
+        border: none;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    .quick-actions .btn {
+        border-radius: 8px;
+        padding: 0.75rem;
+    }
+    .recent-item {
+        border-left: 3px solid transparent;
+        transition: all 0.2s;
+    }
+    .recent-item:hover {
+        border-left-color: #0d6efd;
+        background-color: #f8f9fa;
+    }
+    .activity-timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    .activity-timeline::before {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background-color: #e9ecef;
+    }
+    .activity-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+    .activity-item::before {
+        content: '';
+        position: absolute;
+        left: -25px;
+        top: 5px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #0d6efd;
+        border: 2px solid white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- En-tête -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-1">
+                        <i class="fas fa-tachometer-alt text-primary"></i> Tableau de bord - Gestionnaire
+                    </h1>
+                    <p class="text-muted mb-0">Bienvenue, {{ user.get_full_name|default:user.username }}</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'admin:index' %}" class="btn btn-outline-primary" target="_blank">
+                        <i class="fas fa-cog"></i> Administration
+                    </a>
+                    <button class="btn btn-primary" onclick="window.print()">
+                        <i class="fas fa-print"></i> Imprimer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card border-start border-primary border-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase text-muted mb-1">Logements</h6>
+                            <h2 class="mb-0">{{ total_logements }}</h2>
+                            <p class="text-muted mb-0 small">
+                                <span class="text-success">{{ logements_disponibles }} disponibles</span> • 
+                                <span class="text-warning">{{ logements_loues }} loués</span>
+                            </p>
+                        </div>
+                        <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                            <i class="fas fa-home"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="#" class="btn btn-link btn-sm p-0">Gérer les logements <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card border-start border-success border-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase text-muted mb-1">Propriétaires</h6>
+                            <h2 class="mb-0">{{ total_proprietaires }}</h2>
+                            <p class="text-muted mb-0 small">Contrats actifs</p>
+                        </div>
+                        <div class="stat-icon bg-success bg-opacity-10 text-success">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="#" class="btn btn-link btn-sm p-0">Voir les propriétaires <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card border-start border-info border-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase text-muted mb-1">Clients</h6>
+                            <h2 class="mb-0">{{ total_clients }}</h2>
+                            <p class="text-muted mb-0 small">Demandes en cours</p>
+                        </div>
+                        <div class="stat-icon bg-info bg-opacity-10 text-info">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="#" class="btn btn-link btn-sm p-0">Voir les clients <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card border-start border-warning border-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase text-muted mb-1">Revenus mensuels</h6>
+                            <h2 class="mb-0">Calcul...</h2>
+                            <p class="text-muted mb-0 small">Forfaits agence</p>
+                        </div>
+                        <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="#" class="btn btn-link btn-sm p-0">Rapports financiers <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-bolt"></i> Actions rapides</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row quick-actions">
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <a href="{% url 'ajouter_logement' %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-plus-circle fa-2x mb-2"></i>
+                                <div>Nouveau logement</div>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <a href="{% url 'ajouter_contrat_gestion' %}" class="btn btn-outline-success w-100">
+                                <i class="fas fa-file-contract fa-2x mb-2"></i>
+                                <div>Nouveau contrat</div>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <a href="#" class="btn btn-outline-info w-100">
+                                <i class="fas fa-search fa-2x mb-2"></i>
+                                <div>Voir demandes</div>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <a href="#" class="btn btn-outline-warning w-100">
+                                <i class="fas fa-chart-bar fa-2x mb-2"></i>
+                                <div>Statistiques</div>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <a href="#" class="btn btn-outline-danger w-100">
+                                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                                <div>Alertes</div>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <a href="#" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-cog fa-2x mb-2"></i>
+                                <div>Paramètres</div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenu principal -->
+    <div class="row">
+        <!-- Contrats de gestion -->
+        <div class="col-xl-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-file-contract text-primary"></i> Contrats de gestion actifs</h5>
+                    <a href="#" class="btn btn-sm btn-outline-primary">Voir tout</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if contrats_gestion %}
+                    <div class="list-group list-group-flush">
+                        {% for contrat in contrats_gestion %}
+                        <div class="list-group-item recent-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">{{ contrat.logement.reference }}</h6>
+                                    <p class="mb-1 small text-muted">
+                                        {{ contrat.proprietaire.nom_complet }} • 
+                                        {{ contrat.date_debut|date:"d/m/Y" }} - {{ contrat.date_fin|date:"d/m/Y" }}
+                                    </p>
+                                    <span class="badge bg-light text-dark">
+                                        {{ contrat.montant_mensuel|floatformat:2 }} FCFA/mois
+                                    </span>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-success">Actif</span>
+                                    <div class="text-muted xsmall mt-1">
+                                        {{ contrat.jours_restants }} jours restants
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-file-contract fa-2x text-muted mb-3"></i>
+                        <p class="text-muted">Aucun contrat de gestion actif</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Demandes en attente -->
+        <div class="col-xl-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-clock text-warning"></i> Demandes en attente</h5>
+                    <a href="#" class="btn btn-sm btn-outline-warning">Traiter</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if demandes_recentes %}
+                    <div class="list-group list-group-flush">
+                        {% for demande in demandes_recentes %}
+                        <div class="list-group-item recent-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">{{ demande.client.nom_complet }}</h6>
+                                    <p class="mb-1 small text-muted">
+                                        {{ demande.logement.reference }} • 
+                                        {{ demande.date_demande|date:"d/m/Y H:i" }}
+                                    </p>
+                                    <span class="badge bg-light text-dark">
+                                        Début: {{ demande.date_debut_souhaitee|date:"d/m/Y" }}
+                                    </span>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-warning">En attente</span>
+                                    <div class="mt-2">
+                                        <button class="btn btn-sm btn-outline-success">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-check-circle fa-2x text-muted mb-3"></i>
+                        <p class="text-muted">Aucune demande en attente</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logements récents et activité -->
+    <div class="row">
+        <!-- Logements récemment ajoutés -->
+        <div class="col-xl-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-home text-info"></i> Logements récemment ajoutés</h5>
+                </div>
+                <div class="card-body">
+                    {% if logements_recents %}
+                    <div class="activity-timeline">
+                        {% for logement in logements_recents %}
+                        <div class="activity-item">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <strong>{{ logement.reference }}</strong>
+                                    <p class="mb-1 small">{{ logement.get_type_logement_display }} • {{ logement.zone.nom }}</p>
+                                    <span class="badge bg-{% if logement.etat == 'disponible' %}success{% else %}warning{% endif %}">
+                                        {{ logement.get_etat_display }}
+                                    </span>
+                                </div>
+                                <div class="text-muted xsmall">
+                                    {{ logement.date_creation|date:"d/m/Y" }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-home fa-2x text-muted mb-3"></i>
+                        <p class="text-muted">Aucun logement récent</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Informations système -->
+        <div class="col-xl-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle text-secondary"></i> Informations système</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6><i class="fas fa-server text-primary"></i> Serveur</h6>
+                        <div class="d-flex justify-content-between small">
+                            <span>Statut:</span>
+                            <span class="badge bg-success">En ligne</span>
+                        </div>
+                        <div class="d-flex justify-content-between small">
+                            <span>Utilisateurs connectés:</span>
+                            <span>3</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6><i class="fas fa-database text-success"></i> Base de données</h6>
+                        <div class="d-flex justify-content-between small">
+                            <span>Logements:</span>
+                            <span>{{ total_logements }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between small">
+                            <span>Contrats actifs:</span>
+                            <span>{{ contrats_gestion.count }}</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h6><i class="fas fa-calendar-alt text-warning"></i> Calendrier</h6>
+                        <div class="small">
+                            <div class="d-flex justify-content-between">
+                                <span>Échéances ce mois:</span>
+                                <span class="badge bg-info">12</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Visites prévues:</span>
+                                <span class="badge bg-warning">5</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,351 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/catalogue/catalogue.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+
+{% block title %}Catalogue des logements - TECH IIBS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card-img-top {
+        height: 200px;
+        object-fit: cover;
+    }
+    .badge-type {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 1;
+    }
+    .logement-card {
+        transition: transform 0.3s ease;
+    }
+    .logement-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .price-badge {
+        font-size: 1.1rem;
+        font-weight: bold;
+    }
+    .empty-state {
+        padding: 5rem 2rem;
+        text-align: center;
+        color: #6c757d;
+    }
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    .filters-section {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .search-btn {
+        width: 100%;
+    }
+    .reset-btn {
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- En-tête du catalogue -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h1 class="h2 mb-0">
+                        <i class="fas fa-search text-primary"></i> Catalogue des logements
+                    </h1>
+                    <p class="text-muted mb-0">
+                        {{ total_logements }} logement{{ total_logements|pluralize }} disponible{{ total_logements|pluralize }}
+                    </p>
+                </div>
+                {% if user.is_authenticated and user.profile.role == 'client' %}
+                <div>
+                    <a href="{% url 'mes_demandes' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-list"></i> Mes demandes
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres de recherche -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="filters-section">
+                <form method="get" class="row g-3">
+                    <!-- Type de logement -->
+                    <div class="col-md-3">
+                        <label class="form-label">Type de logement</label>
+                        {{ form.type_logement }}
+                    </div>
+                    
+                    <!-- Zone -->
+                    <div class="col-md-3">
+                        <label class="form-label">Zone</label>
+                        {{ form.zone }}
+                    </div>
+                    
+                    <!-- Surface -->
+                    <div class="col-md-3">
+                        <label class="form-label">Surface (m²)</label>
+                        <div class="input-group">
+                            {{ form.surface_min }}
+                            <span class="input-group-text">à</span>
+                            {{ form.surface_max }}
+                        </div>
+                    </div>
+                    
+                    <!-- Prix -->
+                    <div class="col-md-3">
+                        <label class="form-label">Prix mensuel (FCFA)</label>
+                        <div class="input-group">
+                            {{ form.prix_min }}
+                            <span class="input-group-text">à</span>
+                            {{ form.prix_max }}
+                        </div>
+                    </div>
+                    
+                    <!-- Tri -->
+                    <div class="col-md-3">
+                        <label class="form-label">Trier par</label>
+                        {{ form.order_by }}
+                    </div>
+                    
+                    <!-- Boutons -->
+                    <div class="col-md-3">
+                        <label class="form-label invisible">Actions</label>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary search-btn">
+                                <i class="fas fa-search"></i> Rechercher
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label invisible">Réinitialiser</label>
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'catalogue' %}" class="btn btn-outline-secondary reset-btn">
+                                <i class="fas fa-times"></i> Réinitialiser
+                            </a>
+                        </div>
+                    </div>
+                </form>
+                
+                {% if search_params %}
+                <div class="mt-3">
+                    <small class="text-muted">
+                        Filtres actifs : 
+                        {% for key, value in search_params.items %}
+                            {% if value and key != 'page' and key != 'order_by' %}
+                                <span class="badge bg-light text-dark ms-1">
+                                    {{ key }}: {{ value }}
+                                </span>
+                            {% endif %}
+                        {% endfor %}
+                    </small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des logements -->
+    <div class="row">
+        {% if page_obj.object_list %}
+            {% for logement in page_obj.object_list %}
+            <div class="col-md-4 col-lg-3 mb-4">
+                <div class="card h-100 logement-card">
+                    <!-- Badge type -->
+                    <span class="badge bg-{{ logement.get_type_logement_display|lower }} badge-type">
+                        {{ logement.get_type_logement_display }}
+                    </span>
+                    
+                    <!-- Image -->
+                    {% with logement.images.first as image %}
+                    {% if image %}
+                    <img src="{{ image.image.url }}" class="card-img-top" alt="{{ logement.reference }}">
+                    {% else %}
+                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center">
+                        <i class="fas fa-home fa-3x text-muted"></i>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                    
+                    <!-- Contenu de la carte -->
+                    <div class="card-body d-flex flex-column">
+                        <!-- Prix -->
+                        <div class="mb-2">
+                            <span class="price-badge text-primary">
+                                {% if logement.prix_mensuel %}
+                                    {{ logement.prix_mensuel|floatformat:2 }} FCFA
+                                {% else %}
+                                    Prix non disponible
+                                {% endif %}
+                                <small class="text-muted">/mois</small>
+                            </span>
+                        </div>
+                        
+                        <!-- Référence -->
+                        <h5 class="card-title mb-1">
+                            {{ logement.reference }}
+                        </h5>
+                        
+                        <!-- Adresse -->
+                        <p class="card-text text-muted small mb-2">
+                            <i class="fas fa-map-marker-alt"></i> {{ logement.adresse|truncatechars:30 }}
+                        </p>
+                        
+                        <!-- Caractéristiques -->
+                        <div class="mb-3">
+                            <span class="badge bg-light text-dark me-1">
+                                <i class="fas fa-ruler-combined"></i> {{ logement.surface }} m²
+                            </span>
+                            <span class="badge bg-light text-dark">
+                                <i class="fas fa-map"></i> {{ logement.zone.nom }}
+                            </span>
+                        </div>
+                        
+                        <!-- Description -->
+                        <p class="card-text small flex-grow-1">
+                            {{ logement.description|truncatechars:80|default:"Aucune description" }}
+                        </p>
+                        
+                        <!-- Boutons d'action -->
+                        <div class="mt-auto">
+                            <a href="{% url 'logement_detail' logement.reference %}" 
+                               class="btn btn-outline-primary btn-sm w-100 mb-2">
+                                <i class="fas fa-eye"></i> Voir détails
+                            </a>
+                            
+                            {% if user.is_authenticated and user.profile.role == 'client' %}
+                            <a href="{% url 'demander_visite' logement.reference %}" 
+                               class="btn btn-primary btn-sm w-100">
+                                <i class="fas fa-calendar-check"></i> Demander visite
+                            </a>
+                            {% elif not user.is_authenticated %}
+                            <a href="{% url 'login' %}?next={% url 'demander_visite' logement.reference %}" 
+                               class="btn btn-primary btn-sm w-100">
+                                <i class="fas fa-sign-in-alt"></i> Se connecter pour visiter
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Footer de la carte -->
+                    <div class="card-footer bg-transparent border-top-0">
+                        <small class="text-muted">
+                            <i class="far fa-clock"></i> Ajouté le {{ logement.date_creation|date:"d/m/Y" }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="col-12">
+            <div class="empty-state">
+                <i class="fas fa-search"></i>
+                <h3 class="h4">Aucun logement trouvé</h3>
+                <p class="mb-4">Aucun logement ne correspond à vos critères de recherche.</p>
+                <a href="{% url 'catalogue' %}" class="btn btn-primary">
+                    <i class="fas fa-times"></i> Réinitialiser les filtres
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <nav aria-label="Pagination">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if search_params %}{% for key, value in search_params.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}{% endif %}page=1">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if search_params %}{% for key, value in search_params.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}{% endif %}page={{ page_obj.previous_page_number }}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if search_params %}{% for key, value in search_params.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}{% endif %}page={{ num }}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if search_params %}{% for key, value in search_params.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}{% endif %}page={{ page_obj.next_page_number }}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if search_params %}{% for key, value in search_params.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}{% endif %}page={{ page_obj.paginator.num_pages }}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            
+            <div class="text-center text-muted small">
+                Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ajouter des couleurs aux badges de type
+        const typeColors = {
+            'Maison': 'success',
+            'Appartement': 'info',
+            'Studio': 'warning',
+            'Immeuble': 'danger'
+        };
+        
+        document.querySelectorAll('.badge-type').forEach(badge => {
+            const type = badge.textContent.trim();
+            if (typeColors[type]) {
+                badge.className = badge.className.replace('bg-{{ logement.get_type_logement_display|lower }}', 'bg-' + typeColors[type]);
+            }
+        });
+        
+        // Gestion des formulaires
+        const surfaceMin = document.getElementById('id_surface_min');
+        const surfaceMax = document.getElementById('id_surface_max');
+        const prixMin = document.getElementById('id_prix_min');
+        const prixMax = document.getElementById('id_prix_max');
+        
+        // Ajouter les classes Bootstrap
+        [surfaceMin, surfaceMax, prixMin, prixMax].forEach(field => {
+            if (field) field.classList.add('form-control');
+        });
+    });
+</script>
+{% endblock %}

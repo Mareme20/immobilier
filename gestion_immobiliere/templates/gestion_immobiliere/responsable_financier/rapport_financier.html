@@ -1,0 +1,561 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/responsable_financier/rapport_financier.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+{% load custom_filters %}
+
+{% block title %}Rapport financier - TECH IIBS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        border-radius: 10px;
+        border: none;
+        color: white;
+        margin-bottom: 1rem;
+    }
+    .chart-container {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .period-selector {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .table-report {
+        font-size: 0.9rem;
+    }
+    .table-report th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+    .export-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .highlight-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+    .trend-up {
+        color: #28a745;
+    }
+    .trend-down {
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- En-tête -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-0">
+                        <i class="fas fa-chart-pie text-primary"></i> Rapport financier
+                    </h1>
+                    <p class="text-muted mb-0">
+                        Période: {{ debut_periode|date:"d/m/Y" }} - {{ fin_periode|date:"d/m/Y" }}
+                    </p>
+                </div>
+                <div class="export-buttons">
+                    <button class="btn btn-outline-primary" onclick="window.print()">
+                        <i class="fas fa-print"></i> Imprimer
+                    </button>
+                    <a href="#" class="btn btn-outline-success">
+                        <i class="fas fa-file-excel"></i> Excel
+                    </a>
+                    <a href="#" class="btn btn-outline-danger">
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sélecteur de période -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="period-selector">
+                <form method="get" class="row g-2">
+                    <div class="col-md-3">
+                        <label class="form-label">Date début</label>
+                        <input type="date" name="debut" class="form-control" value="{{ request.GET.debut|default:debut_periode|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Date fin</label>
+                        <input type="date" name="fin" class="form-control" value="{{ request.GET.fin|default:fin_periode|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-filter"></i> Filtrer
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Périodes prédéfinies</label>
+                        <div class="btn-group w-100">
+                            <a href="?debut={{ this_month|date:'Y-m-01' }}&fin={{ today|date:'Y-m-d' }}" class="btn btn-outline-secondary btn-sm">
+                                Ce mois
+                            </a>
+                            <a href="?debut={{ last_month|date:'Y-m-01' }}&fin={{ last_month|date:'Y-m-t' }}" class="btn btn-outline-secondary btn-sm">
+                                Mois dernier
+                            </a>
+                            <a href="?debut={{ this_year|date:'Y-01-01' }}&fin={{ today|date:'Y-m-d' }}" class="btn btn-outline-secondary btn-sm">
+                                Cette année
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques principales -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card stat-card bg-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase opacity-75 mb-1">Chiffre d'affaires</h6>
+                            <h2 class="mb-0">{{ stats.montant_total|floatformat:2 }} FCFA</h2>
+                            <p class="mb-0 opacity-75">{{ stats.total_paiements }} paiements</p>
+                        </div>
+                        <i class="fas fa-money-bill-wave fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card stat-card bg-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase opacity-75 mb-1">Taux recouvrement</h6>
+                            <h2 class="mb-0">{{ stats.taux_recouvrement|floatformat:1 }}%</h2>
+                            <p class="mb-0 opacity-75">
+                                {{ stats.paiements_payes }} / {{ stats.total_paiements }}
+                            </p>
+                        </div>
+                        <i class="fas fa-chart-line fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card stat-card bg-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase opacity-75 mb-1">Moyenne paiement</h6>
+                            <h2 class="mb-0">
+                                {% if stats.total_paiements > 0 %}
+                                    {{ stats.montant_total|divisibleby:stats.total_paiements|floatformat:2 }}
+                                {% else %}
+                                    0.00
+                                {% endif %}
+                                FCFA
+                            </h2>
+                            <p class="mb-0 opacity-75">Par transaction</p>
+                        </div>
+                        <i class="fas fa-calculator fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card stat-card bg-info">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase opacity-75 mb-1">Forfaits agence</h6>
+                            <h2 class="mb-0">Calcul...</h2>
+                            <p class="mb-0 opacity-75">Revenus mensuels</p>
+                        </div>
+                        <i class="fas fa-building fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graphiques et détails -->
+    <div class="row">
+        <!-- Paiements par mode -->
+        <div class="col-lg-6 mb-4">
+            <div class="chart-container">
+                <h5 class="mb-3">
+                    <i class="fas fa-credit-card text-primary"></i> Paiements par mode
+                </h5>
+                
+                {% if modes_paiement %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-report">
+                        <thead>
+                            <tr>
+                                <th>Mode de paiement</th>
+                                <th class="text-end">Nombre</th>
+                                <th class="text-end">Montant total</th>
+                                <th class="text-end">Pourcentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mode in modes_paiement %}
+                            <tr>
+                                <td>
+                                    {% if mode.mode_paiement == 'especes' %}
+                                    <i class="fas fa-money-bill-wave text-success me-2"></i>Espèces
+                                    {% elif mode.mode_paiement == 'cheque' %}
+                                    <i class="fas fa-money-check text-primary me-2"></i>Chèque
+                                    {% elif mode.mode_paiement == 'virement' %}
+                                    <i class="fas fa-university text-info me-2"></i>Virement
+                                    {% elif mode.mode_paiement == 'mobile' %}
+                                    <i class="fas fa-mobile-alt text-warning me-2"></i>Mobile Money
+                                    {% else %}
+                                    <i class="fas fa-credit-card text-secondary me-2"></i>Carte
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">{{ mode.count }}</td>
+                                <td class="text-end">{{ mode.total|floatformat:2 }} FCFA</td>
+                                <td class="text-end">
+                                    {% if stats.montant_total > 0 %}
+                                        {{ mode.total|divisibleby:stats.montant_total|floatformat:1 }}%
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Graphique circulaire simple -->
+                <div class="mt-3">
+                    <div class="d-flex flex-wrap gap-3">
+                        {% for mode in modes_paiement %}
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle me-2" 
+                                 style="width: 20px; height: 20px; background-color: 
+                                 {% cycle '#28a745' '#007bff' '#17a2b8' '#ffc107' '#6c757d' %}"></div>
+                            <span class="small">
+                                {{ mode.get_mode_paiement_display|default:mode.mode_paiement }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-chart-pie fa-2x text-muted mb-3"></i>
+                    <p class="text-muted">Aucun paiement pour cette période</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Évolution mensuelle -->
+        <div class="col-lg-6 mb-4">
+            <div class="chart-container">
+                <h5 class="mb-3">
+                    <i class="fas fa-chart-line text-success"></i> Évolution mensuelle
+                </h5>
+                
+                <!-- Tableau d'évolution -->
+                <div class="table-responsive">
+                    <table class="table table-sm table-report">
+                        <thead>
+                            <tr>
+                                <th>Mois</th>
+                                <th class="text-end">Paiements</th>
+                                <th class="text-end">Montant</th>
+                                <th class="text-end">Taux recouvrement</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Données simulées -->
+                            <tr>
+                                <td>Janvier 2024</td>
+                                <td class="text-end">45</td>
+                                <td class="text-end">12,450.00 FCFA</td>
+                                <td class="text-end text-success">92%</td>
+                            </tr>
+                            <tr>
+                                <td>Février 2024</td>
+                                <td class="text-end">48</td>
+                                <td class="text-end">13,200.00 FCFA</td>
+                                <td class="text-end text-success">95%</td>
+                            </tr>
+                            <tr>
+                                <td>Mars 2024</td>
+                                <td class="text-end">52</td>
+                                <td class="text-end">14,300.00 FCFA</td>
+                                <td class="text-end text-success">96%</td>
+                            </tr>
+                            <tr>
+                                <td>Avril 2024</td>
+                                <td class="text-end">50</td>
+                                <td class="text-end">13,750.00 FCFA</td>
+                                <td class="text-end text-warning">88%</td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <th>Moyenne</th>
+                                <th class="text-end">48.8</th>
+                                <th class="text-end">13,425.00 FCFA</th>
+                                <th class="text-end">92.8%</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                
+                <div class="mt-3">
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-success" style="width: 92%">Jan: 92%</div>
+                        <div class="progress-bar bg-success" style="width: 95%">Fév: 95%</div>
+                        <div class="progress-bar bg-success" style="width: 96%">Mar: 96%</div>
+                        <div class="progress-bar bg-warning" style="width: 88%">Avr: 88%</div>
+                    </div>
+                    <small class="text-muted d-block mt-2">Évolution du taux de recouvrement</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Détails des paiements -->
+    <div class="row">
+        <div class="col-12">
+            <div class="chart-container">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list text-primary"></i> Détails des paiements
+                    </h5>
+                    <span class="badge bg-light text-dark">
+                        {{ paiements.count }} paiement{{ paiements.count|pluralize }}
+                    </span>
+                </div>
+                
+                {% if paiements %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-report">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Client</th>
+                                <th>Logement</th>
+                                <th>Montant</th>
+                                <th>Mode</th>
+                                <th>Statut</th>
+                                <th>Référence</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for paiement in paiements %}
+                            <tr>
+                                <td>{{ paiement.date_paiement|date:"d/m/Y"|default:paiement.mois|date:"m/Y" }}</td>
+                                <td>
+                                    <div class="small">{{ paiement.contrat_location.client.nom_complet|truncatechars:20 }}</div>
+                                </td>
+                                <td>{{ paiement.contrat_location.logement.reference }}</td>
+                                <td class="text-end">{{ paiement.montant|floatformat:2 }} FCFA</td>
+                                <td>
+                                    <span class="badge bg-light text-dark">
+                                        {{ paiement.get_mode_paiement_display|default:"-" }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if paiement.statut == 'paye' %}
+                                    <span class="badge bg-success">Payé</span>
+                                    {% elif paiement.statut == 'en_retard' %}
+                                    <span class="badge bg-danger">Retard</span>
+                                    {% else %}
+                                    <span class="badge bg-warning">Impayé</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ paiement.reference_paiement|default:"-"|truncatechars:15 }}</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if paiements.has_other_pages %}
+                <nav aria-label="Pagination">
+                    <ul class="pagination justify-content-center mt-3">
+                        {% if paiements.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ paiements.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in paiements.paginator.page_range %}
+                            {% if paiements.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                            {% elif num > paiements.number|add:'-3' and num < paiements.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if paiements.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ paiements.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ paiements.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-file-invoice-dollar fa-2x text-muted mb-3"></i>
+                    <p class="text-muted">Aucun paiement pour cette période</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Synthèse et recommandations -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="chart-container">
+                <h5 class="mb-3">
+                    <i class="fas fa-lightbulb text-warning"></i> Synthèse et recommandations
+                </h5>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="alert alert-success">
+                            <h6><i class="fas fa-check-circle"></i> Points forts</h6>
+                            <ul class="mb-0">
+                                <li>Taux de recouvrement satisfaisant ({{ stats.taux_recouvrement|floatformat:1 }}%)</li>
+                                <li>Nombre de transactions stable</li>
+                                <li>Diversité des modes de paiement</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Points d'amélioration</h6>
+                            <ul class="mb-0">
+                                <li>Réduire les paiements en retard</li>
+                                <li>Augmenter l'usage des paiements électroniques</li>
+                                <li>Automatiser les relances</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-chart-bar"></i> Indicateurs clés</h6>
+                    <div class="row">
+                        <div class="col-md-3 text-center">
+                            <div class="highlight-number text-primary">
+                                {{ stats.taux_recouvrement|floatformat:1 }}%
+                            </div>
+                            <small>Taux recouvrement</small>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="highlight-number text-success">
+                                {{ stats.montant_total|floatformat:0 }} FCFA
+                            </div>
+                            <small>Chiffre d'affaires</small>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="highlight-number text-info">
+                                {{ stats.total_paiements }}
+                            </div>
+                            <small>Transactions</small>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="highlight-number text-warning">
+                                {% if stats.total_paiements > 0 %}
+                                    {{ stats.montant_total|divisibleby:stats.total_paiements|floatformat:0 }}
+                                {% else %}
+                                    0
+                                {% endif %}
+                                FCFA
+                            </div>
+                            <small>Panier moyen</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mise en forme des nombres
+        document.querySelectorAll('.highlight-number').forEach(el => {
+            const value = parseFloat(el.textContent);
+            if (!isNaN(value)) {
+                el.textContent = value.toLocaleString('fr-FR', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                });
+            }
+        });
+        
+        // Gestion des dates
+        const today = new Date();
+        const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        const thisYear = new Date(today.getFullYear(), 0, 1);
+        
+        // Formater les dates pour les liens
+        document.querySelectorAll('.this-month').forEach(el => {
+            el.href = el.href.replace('{{ this_month|date:"Y-m-01" }}', 
+                thisMonth.toISOString().split('T')[0]);
+        });
+        
+        // Auto-sélection de la période
+        const urlParams = new URLSearchParams(window.location.search);
+        if (!urlParams.has('debut') || !urlParams.has('fin')) {
+            // Définir une période par défaut (dernier mois)
+            const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+            const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+            
+            document.querySelector('input[name="debut"]').value = 
+                lastMonthStart.toISOString().split('T')[0];
+            document.querySelector('input[name="fin"]').value = 
+                lastMonthEnd.toISOString().split('T')[0];
+        }
+    });
+</script>
+{% endblock %}

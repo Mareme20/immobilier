@@ -1,0 +1,145 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/dashboards/responsable_location_dashboard.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+
+{% block title %}Dashboard Responsable Location - TECH IIBS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h2 mb-1">
+                <i class="fas fa-house-user text-primary"></i> Tableau de bord - Responsable Location
+            </h1>
+            <p class="text-muted mb-0">Gestion des demandes et contrats de location</p>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Demandes en attente</h6>
+                            <p class="display-6 mb-0">{{ demandes_attente }}</p>
+                        </div>
+                        <i class="fas fa-clock fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Aujourd'hui</h6>
+                            <p class="display-6 mb-0">{{ demandes_aujourdhui }}</p>
+                        </div>
+                        <i class="fas fa-calendar-day fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Contrats à signer</h6>
+                            <p class="display-6 mb-0">{{ contrats_a_signer }}</p>
+                        </div>
+                        <i class="fas fa-file-signature fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Visites à organiser</h6>
+                            <p class="display-6 mb-0">5</p>
+                        </div>
+                        <i class="fas fa-calendar-check fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Demandes récentes -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Demandes à traiter</h5>
+                </div>
+                <div class="card-body">
+                    {% if demandes_recentes %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Client</th>
+                                    <th>Logement</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for demande in demandes_recentes %}
+                                <tr>
+                                    <td>{{ demande.client.nom_complet }}</td>
+                                    <td>{{ demande.logement.reference }}</td>
+                                    <td>{{ demande.date_demande|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-success">Valider</button>
+                                        <button class="btn btn-sm btn-danger">Rejeter</button>
+                                        <button class="btn btn-sm btn-info">Détails</button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-4">Aucune demande à traiter</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Contrats récents</h5>
+                </div>
+                <div class="card-body">
+                    {% if contrats_recents %}
+                    <div class="list-group">
+                        {% for contrat in contrats_recents %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ contrat.client.nom_complet }}</h6>
+                                <small>{{ contrat.date_signature|date:"d/m" }}</small>
+                            </div>
+                            <p class="mb-1 small">{{ contrat.logement.reference }}</p>
+                            <span class="badge bg-success">{{ contrat.montant_loyer|floatformat:2 }} FCFA/mois</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-4">Aucun contrat récent</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

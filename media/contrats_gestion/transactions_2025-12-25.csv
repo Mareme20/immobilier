@@ -1,0 +1,75 @@
+﻿Date,Type,Membre,Montant,Description
+2025-12-25T22:34:17.192Z,sortie,Lamine faye,10000,"Paiement tour ordre 2"
+2025-12-25T22:25:07.666Z,sortie,ssssss,6000,"Paiement tour ordre 5"
+2025-12-25T05:27:40.371Z,sortie,nqbqk,,50000,"Paiement tour ordre 6"
+2025-12-25T05:27:32.055Z,sortie,Ali,10000,"Paiement tour ordre 1"
+
+
+"email": "rp@iibs.com", "password": "Test123!"
+    "message": "Utilisateur créé avec succès",
+    "user": {
+        "id": 1,
+        "firstName": "Amadou",
+        "lastName": "Diallo",
+        "email": "admin@test.com",
+        "password": "admin123"
+    }compte
+     mareme@gmail.com
+      passer123
+      user
+      
+      alima@gmail.com
+      aldiana tontine_app
+      
+      APP_Clinique
+      
+       patient: "email": fall@gmail.com,
+  "password": "0000", 
+  
+    "email": "medecin@iibs.com",
+  "mot_de_passe": "123456",
+  
+ 
+  {
+    "nom": "Diallo",
+    "prenom": "Abdoulaye",
+    "email": "responsable_prestation@iibs.com",
+    "mot_de_passe": "2025!",
+    "role": "responsable_prestation"
+}
+  {
+    "nom": "Diop",
+    "prenom": "Marie",
+    "email": "secretaire@iibs.com",
+    "mot_de_passe": "1221",
+    "role": "secretaire"
+}
+{
+  "nom": "Fall",
+  "prenom": "Abdou",
+  "email": "amadou@gmail.com",
+  "password": "password123",
+  "role": "medecin"
+}
+
+
+{
+  "nom": "Mar",
+  "prenom": "Sophie",
+  "email": "sophie@gmail.com",
+  "password": "password123",
+  "role": "secretaire"
+}
+
+
+
+{
+  "nom": "Sall",
+  "prenom": "Fatou",
+  "email": "fatou@gmail.com",
+  "password": "password123",
+  "role": "responsable"
+}
+
+
+ utiliser slack et un certificat ssl

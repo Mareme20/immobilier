@@ -1,0 +1,383 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/catalogue/logement_detail.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+
+{% block title %}{{ logement.reference }} - TECH IIBS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .carousel-item img {
+        height: 400px;
+        object-fit: cover;
+    }
+    .carousel-control-prev,
+    .carousel-control-next {
+        width: 5%;
+    }
+    .specs-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    .spec-item {
+        padding: 1rem;
+        border-radius: 8px;
+        background: #f8f9fa;
+    }
+    .spec-item i {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: #0d6efd;
+    }
+    .similar-card {
+        transition: transform 0.2s;
+    }
+    .similar-card:hover {
+        transform: translateY(-3px);
+    }
+    .back-btn {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 10;
+    }
+    .price-display {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #0d6efd;
+    }
+    .image-thumbnail {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        cursor: pointer;
+        border: 2px solid transparent;
+    }
+    .image-thumbnail.active {
+        border-color: #0d6efd;
+    }
+    .image-thumbnail:hover {
+        opacity: 0.8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Bouton retour -->
+    <a href="{% url 'catalogue' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" 
+       class="btn btn-outline-secondary back-btn">
+        <i class="fas fa-arrow-left"></i> Retour au catalogue
+    </a>
+
+    <!-- En-tête -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h1 class="h2 mb-1">
+                        {{ logement.reference }} - {{ logement.get_type_logement_display }}
+                    </h1>
+                    <p class="text-muted mb-2">
+                        <i class="fas fa-map-marker-alt"></i> {{ logement.adresse }}
+                    </p>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-success">{{ logement.get_type_logement_display }}</span>
+                        <span class="badge bg-info">{{ logement.zone.nom }}</span>
+                        <span class="badge bg-warning">{{ logement.surface }} m²</span>
+                    </div>
+                </div>
+                
+                <div class="text-end">
+                    <div class="price-display">
+                        {% if prix_mensuel %}
+                            {{ prix_mensuel|floatformat:2 }} FCFA
+                            <small class="text-muted fs-6">/mois</small>
+                        {% else %}
+                            <span class="text-danger">Prix non disponible</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-muted mb-0">Caution : {{ logement.caution_fixe|floatformat:2 }} FCFA</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Galerie d'images -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body p-0">
+                    {% if images %}
+                    <div id="carouselLogement" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            {% for image in images %}
+                            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                <img src="{{ image.image.url }}" 
+                                     class="d-block w-100" 
+                                     alt="Image {{ forloop.counter }}">
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        {% if images.count > 1 %}
+                        <button class="carousel-control-prev" type="button" data-bs-target="#carouselLogement" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Précédent</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#carouselLogement" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Suivant</span>
+                        </button>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Miniatures -->
+                    {% if images.count > 1 %}
+                    <div class="d-flex flex-wrap gap-2 p-3">
+                        {% for image in images %}
+                        <img src="{{ image.image.url }}" 
+                             class="image-thumbnail {% if forloop.first %}active{% endif %}"
+                             data-bs-target="#carouselLogement"
+                             data-bs-slide-to="{{ forloop.counter0 }}"
+                             alt="Miniature {{ forloop.counter }}">
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-home fa-4x text-muted mb-3"></i>
+                        <p class="text-muted">Aucune image disponible pour ce logement</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Description et caractéristiques -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Description</h5>
+                </div>
+                <div class="card-body">
+                    {% if logement.description %}
+                    <p class="card-text">{{ logement.description }}</p>
+                    {% else %}
+                    <p class="card-text text-muted">Aucune description disponible pour ce logement.</p>
+                    {% endif %}
+                    
+                    <div class="mt-4">
+                        <h6 class="mb-3"><i class="fas fa-list-check"></i> Caractéristiques</h6>
+                        <div class="specs-grid">
+                            <div class="spec-item text-center">
+                                <i class="fas fa-ruler-combined"></i>
+                                <div>
+                                    <strong>{{ logement.surface }} m²</strong>
+                                    <p class="mb-0 small text-muted">Surface</p>
+                                </div>
+                            </div>
+                            
+                            <div class="spec-item text-center">
+                                <i class="fas fa-map"></i>
+                                <div>
+                                    <strong>{{ logement.zone.nom }}</strong>
+                                    <p class="mb-0 small text-muted">Zone</p>
+                                </div>
+                            </div>
+                            
+                            <div class="spec-item text-center">
+                                <i class="fas fa-home"></i>
+                                <div>
+                                    <strong>{{ logement.get_type_logement_display }}</strong>
+                                    <p class="mb-0 small text-muted">Type</p>
+                                </div>
+                            </div>
+                            
+                            <div class="spec-item text-center">
+                                <i class="fas fa-shield-alt"></i>
+                                <div>
+                                    <strong>{{ logement.caution_fixe|floatformat:2 }}FCFA</strong>
+                                    <p class="mb-0 small text-muted">Caution</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Informations propriétaire et actions -->
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-user-tie"></i> Propriétaire</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-user-circle fa-2x text-muted"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-1">{{ logement.proprietaire.nom_complet }}</h6>
+                            <p class="text-muted small mb-0">
+                                <i class="fas fa-phone"></i> {{ logement.proprietaire.telephone }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="alert alert-info small mb-0">
+                        <i class="fas fa-info-circle"></i> Le propriétaire est géré par notre agence. 
+                        Vous ne le contactez pas directement.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-calendar-check"></i> Intéressé par ce logement ?</h5>
+                </div>
+                <div class="card-body">
+                    {% if user.is_authenticated %}
+                        {% if user.profile.role == 'client' %}
+                        <a href="{% url 'demander_visite' logement.reference %}" 
+                           class="btn btn-primary w-100 mb-2">
+                            <i class="fas fa-calendar-plus"></i> Demander une visite
+                        </a>
+ 
+                        <form method="post" action="{% url 'demander_visite' logement.reference %}" class="mb-2">
+                            {% csrf_token %}
+                            <input type="hidden" name="logement_id" value="{{ logement.id }}">
+                            <button type="submit" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-file-signature"></i> Faire une demande
+                            </button>
+                        </form>
+                        
+                        <div class="alert alert-warning small">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            Une caution de {{ logement.caution_fixe|floatformat:2 }} FCFA sera requise.
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            Seuls les clients peuvent faire des demandes de location.
+                        </div>
+                        {% endif %}
+                    {% else %}
+                    <div class="text-center">
+                        <i class="fas fa-lock fa-2x text-muted mb-3"></i>
+                        <p class="mb-3">Connectez-vous pour faire une demande de visite.</p>
+                        <a href="{% url 'login' %}?next={% url 'demander_visite' logement.reference %}" 
+                           class="btn btn-primary w-100 mb-2">
+                            <i class="fas fa-sign-in-alt"></i> Se connecter
+                        </a>
+                        <a href="{% url 'register' %}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-user-plus"></i> Créer un compte
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logements similaires -->
+    {% if logements_similaires %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-home"></i> Logements similaires</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for sim_logement in logements_similaires %}
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="card h-100 similar-card">
+                                {% with sim_logement.images.first as image %}
+                                {% if image %}
+                                <img src="{{ image.image.url }}" 
+                                     class="card-img-top" 
+                                     alt="{{ sim_logement.reference }}"
+                                     style="height: 150px; object-fit: cover;">
+                                {% else %}
+                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                                     style="height: 150px;">
+                                    <i class="fas fa-home fa-2x text-muted"></i>
+                                </div>
+                                {% endif %}
+                                {% endwith %}
+                                
+                                <div class="card-body">
+                                    <h6 class="card-title mb-1">{{ sim_logement.reference }}</h6>
+                                    <p class="card-text small text-muted mb-2">
+                                        <i class="fas fa-map-marker-alt"></i> 
+                                        {{ sim_logement.adresse|truncatechars:20 }}
+                                    </p>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-light text-dark">
+                                            {{ sim_logement.surface }} m²
+                                        </span>
+                                        <span class="text-primary fw-bold">
+                                            {% if sim_logement.prix_mensuel %}
+                                                {{ sim_logement.prix_mensuel|floatformat:0 }} FCFA
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="card-footer bg-transparent">
+                                    <a href="{% url 'logement_detail' sim_logement.reference %}" 
+                                       class="btn btn-outline-primary btn-sm w-100">
+                                        Voir détails
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Activer les miniatures
+        const thumbnails = document.querySelectorAll('.image-thumbnail');
+        thumbnails.forEach(thumb => {
+            thumb.addEventListener('click', function() {
+                // Retirer la classe active de toutes les miniatures
+                thumbnails.forEach(t => t.classList.remove('active'));
+                // Ajouter la classe active à la miniature cliquée
+                this.classList.add('active');
+            });
+        });
+        
+        // Gestion du carousel
+        const carousel = document.getElementById('carouselLogement');
+        if (carousel) {
+            carousel.addEventListener('slide.bs.carousel', function(event) {
+                const slideIndex = event.to;
+                // Mettre à jour les miniatures
+                thumbnails.forEach((thumb, index) => {
+                    if (index === slideIndex) {
+                        thumb.classList.add('active');
+                    } else {
+                        thumb.classList.remove('active');
+                    }
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

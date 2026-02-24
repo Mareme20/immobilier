@@ -1,0 +1,167 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/gestion/ajouter_contrat_gestion.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+
+{% block title %}{{ title }} - TECH IIBS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center">
+                <a href="{% url 'gerer_contrats_gestion' %}" class="btn btn-outline-secondary me-3">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div>
+                    <h1 class="h2 mb-0">{{ title }}</h1>
+                    {% if contrat %}
+                    <p class="text-muted mb-0">Contrat #{{ contrat.id }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Logement *</label>
+                        {{ form.logement }}
+                        {% if form.logement.errors %}
+                        <div class="invalid-feedback d-block">{{ form.logement.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Propriétaire *</label>
+                        {{ form.proprietaire }}
+                        {% if form.proprietaire.errors %}
+                        <div class="invalid-feedback d-block">{{ form.proprietaire.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Date de début *</label>
+                        {{ form.date_debut }}
+                        {% if form.date_debut.errors %}
+                        <div class="invalid-feedback d-block">{{ form.date_debut.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Date de fin *</label>
+                        {{ form.date_fin }}
+                        {% if form.date_fin.errors %}
+                        <div class="invalid-feedback d-block">{{ form.date_fin.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Montant mensuel (FCFA) *</label>
+                        {{ form.montant_mensuel }}
+                        {% if form.montant_mensuel.errors %}
+                        <div class="invalid-feedback d-block">{{ form.montant_mensuel.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">État *</label>
+                        {{ form.etat }}
+                        {% if form.etat.errors %}
+                        <div class="invalid-feedback d-block">{{ form.etat.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Contrat signé</label>
+                    {{ form.fichier_contrat }}
+                    {% if form.fichier_contrat.errors %}
+                    <div class="invalid-feedback d-block">{{ form.fichier_contrat.errors }}</div>
+                    {% endif %}
+                    {% if contrat and contrat.fichier_contrat %}
+                    <div class="mt-2">
+                        <a href="{{ contrat.fichier_contrat.url }}" target="_blank" class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-eye"></i> Voir le contrat
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Remarques</label>
+                    {{ form.remarques }}
+                    {% if form.remarques.errors %}
+                    <div class="invalid-feedback d-block">{{ form.remarques.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <!-- Calcul automatique -->
+                {% if contrat %}
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-calculator"></i> Calcul du loyer</h6>
+                    <p class="mb-1">Montant propriétaire: {{ contrat.montant_mensuel|floatformat:2 }} FCFA</p>
+                    <p class="mb-1">Forfait agence: {{ contrat.logement.zone.forfait_agence|floatformat:2 }} FCFA</p>
+                    <p class="mb-0 fw-bold">Total loyer client: {{ contrat.prix_loyer_total|floatformat:2 }} FCFA/mois</p>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="card-footer">
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save"></i> Enregistrer
+                    </button>
+                    <a href="{% url 'gerer_contrats_gestion' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times"></i> Annuler
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ajouter classes Bootstrap
+        document.querySelectorAll('select, input, textarea').forEach(field => {
+            if (!field.classList.contains('form-control') && !field.classList.contains('form-select')) {
+                if (field.tagName === 'SELECT') {
+                    field.classList.add('form-select');
+                } else {
+                    field.classList.add('form-control');
+                }
+            }
+        });
+        
+        // Validation des dates
+        const dateDebut = document.getElementById('id_date_debut');
+        const dateFin = document.getElementById('id_date_fin');
+        
+        if (dateDebut && dateFin) {
+            dateDebut.addEventListener('change', function() {
+                if (dateFin.value && new Date(dateFin.value) <= new Date(this.value)) {
+                    alert('La date de fin doit être après la date de début.');
+                    this.value = '';
+                }
+            });
+            
+            dateFin.addEventListener('change', function() {
+                if (dateDebut.value && new Date(this.value) <= new Date(dateDebut.value)) {
+                    alert('La date de fin doit être après la date de début.');
+                    this.value = '';
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

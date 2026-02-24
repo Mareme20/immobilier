@@ -1,0 +1,534 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/register.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+
+{% block title %}Inscription - TECH IIBS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-user-plus"></i> Créer votre compte</h4>
+                <small class="text-muted">Rejoignez TECH IIBS et trouvez votre logement idéal</small>
+            </div>
+            <div class="card-body">
+                <form method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Informations personnelles -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="fas fa-id-card text-primary"></i> Informations personnelles
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="id_first_name" class="form-label">
+                                <i class="fas fa-user"></i> Prénom *
+                            </label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                            <div class="invalid-feedback d-block">{{ form.first_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="id_last_name" class="form-label">
+                                <i class="fas fa-user"></i> Nom *
+                            </label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                            <div class="invalid-feedback d-block">{{ form.last_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="id_username" class="form-label">
+                                <i class="fas fa-at"></i> Nom d'utilisateur *
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">@</span>
+                                {{ form.username }}
+                            </div>
+                            <small class="form-text text-muted">Ce sera votre identifiant de connexion</small>
+                            {% if form.username.errors %}
+                            <div class="invalid-feedback d-block">{{ form.username.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="id_email" class="form-label">
+                                <i class="fas fa-envelope"></i> Email *
+                            </label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                            <div class="invalid-feedback d-block">{{ form.email.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="id_date_naissance" class="form-label">
+                                <i class="fas fa-birthday-cake"></i> Date de naissance *
+                            </label>
+                            {{ form.date_naissance }}
+                            {% if form.date_naissance.errors %}
+                            <div class="invalid-feedback d-block">{{ form.date_naissance.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="id_telephone" class="form-label">
+                                <i class="fas fa-phone"></i> Téléphone *
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">+221</span>
+                                {{ form.telephone }}
+                            </div>
+                            {% if form.telephone.errors %}
+                            <div class="invalid-feedback d-block">{{ form.telephone.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Adresse -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="fas fa-map-marker-alt text-primary"></i> Adresse
+                            </h5>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="id_adresse" class="form-label">
+                                <i class="fas fa-home"></i> Adresse complète *
+                            </label>
+                            {{ form.adresse }}
+                            <small class="form-text text-muted">Rue, ville, code postal</small>
+                            {% if form.adresse.errors %}
+                            <div class="invalid-feedback d-block">{{ form.adresse.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Mot de passe -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="fas fa-lock text-primary"></i> Sécurité du compte
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="id_password1" class="form-label">
+                                <i class="fas fa-key"></i> Mot de passe *
+                            </label>
+                            {{ form.password1 }}
+                            <div class="mt-2">
+                                <small class="form-text text-muted">Votre mot de passe doit contenir :</small>
+                                <ul class="small text-muted">
+                                    <li>Au moins 8 caractères</li>
+                                    <li>Pas uniquement des chiffres</li>
+                                    <li>Pas trop commun</li>
+                                </ul>
+                            </div>
+                            {% if form.password1.errors %}
+                            <div class="invalid-feedback d-block">{{ form.password1.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="id_password2" class="form-label">
+                                <i class="fas fa-key"></i> Confirmation *
+                            </label>
+                            {{ form.password2 }}
+                            <small class="form-text text-muted">Saisissez à nouveau votre mot de passe</small>
+                            {% if form.password2.errors %}
+                            <div class="invalid-feedback d-block">{{ form.password2.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Type de compte -->
+                    <div class="row mb-4">
+                        <!-- Dans register.html, modifier la section "Type de compte" -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h5 class="border-bottom pb-2 mb-3">
+            <i class="fas fa-users text-primary"></i> Type de compte
+        </h5>
+        <p class="text-muted mb-3">Sélectionnez le type de compte correspondant à votre profil :</p>
+    </div>
+    
+    <div class="col-12 mb-3">
+        <div class="row" id="roleSelection">
+            <!-- Client -->
+            <div class="col-md-2 col-6 mb-3">
+                <div class="card h-100 role-card" data-role="client">
+                    <div class="card-body text-center">
+                        <i class="fas fa-user fa-2x text-primary mb-2"></i>
+                        <h6 class="card-title">Client</h6>
+                        <p class="card-text xsmall">Je cherche un logement</p>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="role" 
+                                   id="role_client" value="client" checked>
+                            <label class="form-check-label xsmall" for="role_client">
+                                Sélectionner
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Propriétaire -->
+            <div class="col-md-2 col-6 mb-3">
+                <div class="card h-100 role-card" data-role="proprietaire">
+                    <div class="card-body text-center">
+                        <i class="fas fa-home fa-2x text-success mb-2"></i>
+                        <h6 class="card-title">Propriétaire</h6>
+                        <p class="card-text xsmall">Je loue mes biens</p>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="role" 
+                                   id="role_proprietaire" value="proprietaire">
+                            <label class="form-check-label xsmall" for="role_proprietaire">
+                                Sélectionner
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Gestionnaire -->
+            <div class="col-md-2 col-6 mb-3">
+                <div class="card h-100 role-card" data-role="gestionnaire">
+                    <div class="card-body text-center">
+                        <i class="fas fa-tachometer-alt fa-2x text-warning mb-2"></i>
+                        <h6 class="card-title">Gestionnaire</h6>
+                        <p class="card-text xsmall">Personnel agence</p>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="role" 
+                                   id="role_gestionnaire" value="gestionnaire">
+                            <label class="form-check-label xsmall" for="role_gestionnaire">
+                                Sélectionner
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Responsable Location -->
+            <div class="col-md-2 col-6 mb-3">
+                <div class="card h-100 role-card" data-role="responsable_location">
+                    <div class="card-body text-center">
+                        <i class="fas fa-house-user fa-2x text-info mb-2"></i>
+                        <h6 class="card-title">Resp. Location</h6>
+                        <p class="card-text xsmall">Gestion locations</p>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="role" 
+                                   id="role_responsable_location" value="responsable_location">
+                            <label class="form-check-label xsmall" for="role_responsable_location">
+                                Sélectionner
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Responsable Financier -->
+            <div class="col-md-2 col-6 mb-3">
+                <div class="card h-100 role-card" data-role="responsable_financier">
+                    <div class="card-body text-center">
+                        <i class="fas fa-chart-line fa-2x text-danger mb-2"></i>
+                        <h6 class="card-title">Resp. Financier</h6>
+                        <p class="card-text xsmall">Gestion financière</p>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="role" 
+                                   id="role_responsable_financier" value="responsable_financier">
+                            <label class="form-check-label xsmall" for="role_responsable_financier">
+                                Sélectionner
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Message d'information pour les rôles agence -->
+        <div id="staffMessage" class="alert alert-info mt-3" style="display: none;">
+            <i class="fas fa-info-circle"></i> 
+            Pour les rôles d'agence (Gestionnaire, Responsable Location, Responsable Financier), 
+            votre compte devra être validé par un administrateur avant d'être activé.
+        </div>
+    </div>
+</div>
+                            
+                            <!-- Section supplémentaire pour les propriétaires -->
+                            <div id="proprietaireFields" class="mt-3" style="display: none;">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="numero_fiscal" class="form-label">
+                                            Numéro fiscal
+                                        </label>
+                                        <input type="text" class="form-control" id="numero_fiscal" 
+                                               name="numero_fiscal" placeholder="Votre numéro fiscal">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="rib" class="form-label">
+                                            RIB
+                                        </label>
+                                        <input type="text" class="form-control" id="rib" 
+                                               name="rib" placeholder="Votre RIB">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Section pour les autres rôles -->
+                            <div id="autreRoles" class="mt-3" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="role_autres" class="form-label">Sélectionnez votre rôle :</label>
+                                    <select class="form-select" id="role_autres" name="role_autres">
+                                        <option value="">-- Sélectionnez --</option>
+                                        <option value="gestionnaire">Gestionnaire</option>
+                                        <option value="responsable_location">Responsable Location</option>
+                                        <option value="responsable_financier">Responsable Financier</option>
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        Pour ces rôles, veuillez contacter l'administrateur après votre inscription
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Conditions générales -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" 
+                                       id="accept_conditions" name="accept_conditions" required>
+                                <label class="form-check-label" for="accept_conditions">
+                                    J'accepte les <a href="#" data-bs-toggle="modal" data-bs-target="#conditionsModal">
+                                        conditions générales d'utilisation
+                                    </a> *
+                                </label>
+                                <div class="invalid-feedback">
+                                    Vous devez accepter les conditions générales.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Boutons d'action -->
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <button type="submit" class="btn btn-primary btn-lg w-100">
+                                <i class="fas fa-user-plus"></i> Créer mon compte
+                            </button>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <a href="{% url 'login' %}" class="btn btn-outline-secondary btn-lg w-100">
+                                <i class="fas fa-sign-in-alt"></i> J'ai déjà un compte
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center">
+                <small class="text-muted">
+                    En créant un compte, vous acceptez notre politique de confidentialité et nos CGU.
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour les conditions générales -->
+<div class="modal fade" id="conditionsModal" tabindex="-1" aria-labelledby="conditionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="conditionsModalLabel">
+                    <i class="fas fa-file-contract"></i> Conditions Générales d'Utilisation
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. Acceptation des conditions</h6>
+                <p>En utilisant les services de TECH IIBS, vous acceptez les présentes conditions générales.</p>
+                
+                <h6>2. Services proposés</h6>
+                <p>TECH IIBS propose des services de location immobilière pour particuliers et professionnels.</p>
+                
+                <h6>3. Responsabilités</h6>
+                <p>Chaque utilisateur est responsable des informations fournies et des actions réalisées sur son compte.</p>
+                
+                <h6>4. Protection des données</h6>
+                <p>Nous nous engageons à protéger vos données personnelles conformément au RGPD.</p>
+                
+                <h6>5. Modification des conditions</h6>
+                <p>TECH IIBS se réserve le droit de modifier ces conditions à tout moment.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .role-card {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .role-card:hover {
+        border-color: #0d6efd;
+        transform: translateY(-5px);
+    }
+    
+    .role-card.selected {
+        border-color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+    
+    .role-card .form-check-input {
+        cursor: pointer;
+    }
+    
+    .invalid-feedback {
+        display: block;
+    }
+    
+    textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Ajouter des classes Bootstrap aux champs du formulaire
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ajouter classes Bootstrap à tous les champs input
+        const inputs = document.querySelectorAll('input[type="text"], input[type="email"], input[type="date"], input[type="password"]');
+        inputs.forEach(input => {
+            if (!input.classList.contains('form-control')) {
+                input.classList.add('form-control');
+            }
+        });
+        
+        // Ajouter classe à textarea
+        const textarea = document.getElementById('id_adresse');
+        if (textarea) {
+            textarea.classList.add('form-control');
+        }
+        
+        // Gestion de la sélection des rôles
+        const roleCards = document.querySelectorAll('.role-card');
+        const roleInputs = document.querySelectorAll('input[name="role"]');
+        const proprietaireFields = document.getElementById('proprietaireFields');
+        const autreRoles = document.getElementById('autreRoles');
+        
+        // Initialisation
+        updateRoleSelection();
+        
+        // Écouteurs d'événements pour les cartes de rôle
+        roleCards.forEach(card => {
+            card.addEventListener('click', function(e) {
+                if (!e.target.matches('input[type="radio"]')) {
+                    const roleInput = this.querySelector('input[type="radio"]');
+                    roleInput.checked = true;
+                    updateRoleSelection();
+                }
+            });
+        });
+        
+        // Écouteurs pour les boutons radio
+        roleInputs.forEach(input => {
+            input.addEventListener('change', updateRoleSelection);
+        });
+        
+        function updateRoleSelection() {
+            // Retirer la classe selected de toutes les cartes
+            roleCards.forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Trouver le rôle sélectionné
+            const selectedRole = document.querySelector('input[name="role"]:checked');
+            if (selectedRole) {
+                const roleValue = selectedRole.value;
+                
+                // Ajouter classe selected à la carte correspondante
+        const selectedCard = document.querySelector(`.role-card[data-role="${roleValue}"]`);
+        if (selectedCard) {
+            selectedCard.classList.add('selected');
+        }
+        
+        // Afficher/masquer le message pour les rôles staff
+        const staffMessage = document.getElementById('staffMessage');
+        if (['gestionnaire', 'responsable_location', 'responsable_financier'].includes(roleValue)) {
+            staffMessage.style.display = 'block';
+        } else {
+            staffMessage.style.display = 'none';
+        }
+        
+        // Gérer les champs supplémentaires pour les propriétaires
+        if (roleValue === 'proprietaire') {
+            proprietaireFields.style.display = 'block';
+            
+            // Rendre les champs obligatoires
+            document.getElementById('numero_fiscal').required = true;
+            document.getElementById('rib').required = true;
+            
+        } else {
+            proprietaireFields.style.display = 'none';
+            
+            // Supprimer required des champs propriétaire
+            document.getElementById('numero_fiscal').required = false;
+            document.getElementById('rib').required = false;
+        }
+    }
+        }
+        
+        // Validation du formulaire
+        const form = document.querySelector('.needs-validation');
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+            
+            // Gérer le champ rôle pour "autre"
+            if (document.getElementById('role_autre').checked) {
+                const autreRoleSelect = document.getElementById('role_autres');
+                if (!autreRoleSelect.value) {
+                    event.preventDefault();
+                    autreRoleSelect.classList.add('is-invalid');
+                    const feedback = document.createElement('div');
+                    feedback.className = 'invalid-feedback';
+                    feedback.textContent = 'Veuillez sélectionner un rôle';
+                    autreRoleSelect.parentNode.appendChild(feedback);
+                }
+            }
+        });
+        
+        // Gestion du changement pour le sélecteur de rôle "autre"
+        const autreRoleSelect = document.getElementById('role_autres');
+        if (autreRoleSelect) {
+            autreRoleSelect.addEventListener('change', function() {
+                this.classList.remove('is-invalid');
+                // Mettre à jour le champ role caché
+                if (this.value) {
+                    document.querySelector('input[name="role"]').value = this.value;
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

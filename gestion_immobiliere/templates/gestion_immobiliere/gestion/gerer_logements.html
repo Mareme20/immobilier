@@ -1,0 +1,381 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/gestion/gerer_logements.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+
+{% block title %}Gérer les logements - TECH IIBS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .table-actions {
+        white-space: nowrap;
+        width: 1%;
+    }
+    .status-badge {
+        min-width: 100px;
+    }
+    .search-box {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1rem;
+    }
+    .filter-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    .image-preview {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- En-tête -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-0">
+                        <i class="fas fa-home text-primary"></i> Gestion des logements
+                    </h1>
+                    <p class="text-muted mb-0">
+                        {{ logements.count }} logement{{ logements.count|pluralize }} au total
+                    </p>
+                </div>
+                <div>
+                    <a href="{% url 'ajouter_logement' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Ajouter un logement
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres et recherche -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="search-box">
+                <form method="get" class="row g-2">
+                    <div class="col-md-3">
+                        <input type="text" name="search" class="form-control" placeholder="Rechercher..." value="{{ request.GET.search }}">
+                    </div>
+                    <div class="col-md-2">
+                        <select name="type" class="form-select">
+                            <option value="">Tous types</option>
+                            <option value="maison" {% if request.GET.type == 'maison' %}selected{% endif %}>Maison</option>
+                            <option value="appartement" {% if request.GET.type == 'appartement' %}selected{% endif %}>Appartement</option>
+                            <option value="studio" {% if request.GET.type == 'studio' %}selected{% endif %}>Studio</option>
+                            <option value="immeuble" {% if request.GET.type == 'immeuble' %}selected{% endif %}>Immeuble</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select name="etat" class="form-select">
+                            <option value="">Tous états</option>
+                            <option value="disponible" {% if request.GET.etat == 'disponible' %}selected{% endif %}>Disponible</option>
+                            <option value="loue" {% if request.GET.etat == 'loue' %}selected{% endif %}>Loué</option>
+                            <option value="maintenance" {% if request.GET.etat == 'maintenance' %}selected{% endif %}>Maintenance</option>
+                            <option value="archive" {% if request.GET.etat == 'archive' %}selected{% endif %}>Archivé</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select name="zone" class="form-select">
+                            <option value="">Toutes zones</option>
+                            {% for zone in zones %}
+                            <option value="{{ zone.id }}" {% if request.GET.zone == zone.id|stringformat:"s" %}selected{% endif %}>{{ zone.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select name="proprietaire" class="form-select">
+                            <option value="">Tous propriétaires</option>
+                            {% for proprio in proprietaires %}
+                            <option value="{{ proprio.pk }}" {% if request.GET.proprietaire == proprio.pk|stringformat:"s" %}selected{% endif %}>{{ proprio.nom_complet }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
+                
+                {% if request.GET %}
+                <div class="filter-tags">
+                    {% for key, value in request.GET.items %}
+                        {% if value and key != 'page' %}
+                        <span class="badge bg-light text-dark">
+                            {{ key }}: {{ value }}
+                            <a href="?{% for k, v in request.GET.items %}{% if k != key %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="text-danger ms-1">
+                                <i class="fas fa-times"></i>
+                            </a>
+                        </span>
+                        {% endif %}
+                    {% endfor %}
+                    {% if request.GET %}
+                    <a href="{% url 'gerer_logements' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-times"></i> Tout effacer
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Disponibles</h6>
+                            <p class="h4 mb-0">{{ stats.disponibles }}</p>
+                        </div>
+                        <i class="fas fa-home fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Loués</h6>
+                            <p class="h4 mb-0">{{ stats.loues }}</p>
+                        </div>
+                        <i class="fas fa-key fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Maintenance</h6>
+                            <p class="h4 mb-0">{{ stats.maintenance }}</p>
+                        </div>
+                        <i class="fas fa-tools fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-secondary text-white">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Archivés</h6>
+                            <p class="h4 mb-0">{{ stats.archives }}</p>
+                        </div>
+                        <i class="fas fa-archive fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau des logements -->
+    <div class="card">
+        <div class="card-body p-0">
+            {% if logements %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Référence</th>
+                            <th>Image</th>
+                            <th>Type</th>
+                            <th>Adresse</th>
+                            <th>Propriétaire</th>
+                            <th>Zone</th>
+                            <th>Surface</th>
+                            <th>État</th>
+                            <th>Date</th>
+                            <th class="table-actions">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for logement in logements %}
+                        <tr>
+                            <td>
+                                <strong>{{ logement.reference }}</strong>
+                                <div class="text-muted xsmall">ID: {{ logement.id }}</div>
+                            </td>
+                            <td>
+                                {% with logement.images.first as image %}
+                                {% if image %}
+                                <img src="{{ image.image.url }}" alt="{{ logement.reference }}" class="image-preview">
+                                {% else %}
+                                <div class="image-preview bg-light d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-home text-muted"></i>
+                                </div>
+                                {% endif %}
+                                {% endwith %}
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ logement.get_type_logement_display }}</span>
+                            </td>
+                            <td>
+                                <div>{{ logement.adresse|truncatechars:30 }}</div>
+                                <div class="text-muted xsmall">{{ logement.zone.nom }}</div>
+                            </td>
+                            <td>
+                                <div>{{ logement.proprietaire.nom_complet }}</div>
+                                <div class="text-muted xsmall">{{ logement.proprietaire.telephone }}</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark">{{ logement.zone.nom }}</span>
+                            </td>
+                            <td>{{ logement.surface }} m²</td>
+                            <td>
+                                {% if logement.etat == 'disponible' %}
+                                <span class="badge bg-success status-badge">Disponible</span>
+                                {% elif logement.etat == 'loue' %}
+                                <span class="badge bg-warning status-badge">Loué</span>
+                                {% elif logement.etat == 'maintenance' %}
+                                <span class="badge bg-danger status-badge">Maintenance</span>
+                                {% elif logement.etat == 'archive' %}
+                                <span class="badge bg-secondary status-badge">Archivé</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="xsmall">{{ logement.date_creation|date:"d/m/Y" }}</div>
+                                <div class="xsmall text-muted">{{ logement.date_creation|date:"H:i" }}</div>
+                            </td>
+                            <td class="table-actions">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'logement_detail' logement.reference %}" 
+                                       class="btn btn-outline-primary" 
+                                       title="Voir détails" 
+                                       target="_blank">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'modifier_logement' logement.pk %}" 
+                                       class="btn btn-outline-info" 
+                                       title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if logement.etat != 'archive' %}
+                                    <a href="{% url 'archiver_logement' logement.pk %}" 
+                                       class="btn btn-outline-warning" 
+                                       title="Archiver">
+                                        <i class="fas fa-archive"></i>
+                                    </a>
+                                    {% else %}
+                                    <a href="{% url 'archiver_logement' logement.pk %}" 
+                                       class="btn btn-outline-success" 
+                                       title="Désarchiver">
+                                        <i class="fas fa-box-open"></i>
+                                    </a>
+                                    {% endif %}
+                                    <button type="button" 
+                                            class="btn btn-outline-danger" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#deleteModal{{ logement.pk }}"
+                                            title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                                
+                                <!-- Modal de suppression -->
+                                <div class="modal fade" id="deleteModal{{ logement.pk }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Supprimer le logement</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Êtes-vous sûr de vouloir supprimer le logement <strong>{{ logement.reference }}</strong> ?</p>
+                                                <div class="alert alert-danger">
+                                                    <i class="fas fa-exclamation-triangle"></i>
+                                                    Cette action est irréversible. Toutes les images associées seront également supprimées.
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                <form method="post" action="{% url 'supprimer_logement' logement.pk %}">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="card-footer">
+                <nav aria-label="Pagination">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+            
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-home fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Aucun logement trouvé</h5>
+                <p class="text-muted mb-4">Aucun logement ne correspond à vos critères de recherche.</p>
+                <a href="{% url 'ajouter_logement' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Ajouter un logement
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

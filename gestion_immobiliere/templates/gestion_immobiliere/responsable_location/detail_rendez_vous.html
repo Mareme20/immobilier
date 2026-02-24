@@ -1,0 +1,197 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/responsable_location/detail_rendez_vous.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+
+{% block title %}Détails du rendez-vous - TECH IIBS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center">
+                <a href="{% url 'mes_rendez_vous' %}" class="btn btn-outline-secondary me-3">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div>
+                    <h1 class="h2 mb-0">Rendez-vous #{{ rdv.id }}</h1>
+                    <p class="text-muted mb-0">
+                        {{ rdv.date_rendez_vous|date:"d/m/Y H:i" }}
+                        • {{ rdv.get_type_rdv_display }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Informations principales -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Informations du rendez-vous</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Date et heure:</strong><br>
+                                {{ rdv.date_rendez_vous|date:"l d F Y" }} à {{ rdv.date_rendez_vous|time:"H:i" }}
+                            </p>
+                            <p><strong>Lieu:</strong><br>{{ rdv.lieu }}</p>
+                            <p><strong>Type:</strong><br>{{ rdv.get_type_rdv_display }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Statut:</strong><br>
+                                <span class="badge bg-{% if rdv.statut == 'confirme' %}success{% elif rdv.statut == 'annule' %}danger{% else %}warning{% endif %}">
+                                    {{ rdv.get_statut_display }}
+                                </span>
+                            </p>
+                            <p><strong>Créé le:</strong><br>{{ rdv.date_creation|date:"d/m/Y H:i" }}</p>
+                            <p><strong>Par:</strong><br>{{ rdv.cree_par.get_full_name|default:rdv.cree_par.username }}</p>
+                        </div>
+                    </div>
+                    
+                    {% if rdv.notes %}
+                    <div class="mt-3">
+                        <strong>Notes:</strong>
+                        <div class="alert alert-light mt-2">
+                            {{ rdv.notes|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Informations client -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-user"></i> Informations client</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Nom complet:</strong><br>{{ rdv.demande_location.client.nom_complet }}</p>
+                            <p><strong>Téléphone:</strong><br>{{ rdv.contact_client }}</p>
+                            <p><strong>Email:</strong><br>{{ rdv.demande_location.client.profile.user.email|default:"Non renseigné" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Adresse:</strong><br>{{ rdv.demande_location.client.adresse|linebreaksbr }}</p>
+                            <p><strong>Profession:</strong><br>{{ rdv.demande_location.client.profession|default:"Non renseigné" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Informations logement -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-home"></i> Informations logement</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Référence:</strong><br>{{ rdv.demande_location.logement.reference }}</p>
+                            <p><strong>Type:</strong><br>{{ rdv.demande_location.logement.get_type_logement_display }}</p>
+                            <p><strong>Surface:</strong><br>{{ rdv.demande_location.logement.surface }} m²</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Adresse:</strong><br>{{ rdv.demande_location.logement.adresse|linebreaksbr }}</p>
+                            <p><strong>Zone:</strong><br>{{ rdv.demande_location.logement.zone.nom }}</p>
+                            <p><strong>Caution:</strong><br>{{ rdv.demande_location.logement.caution_fixe|floatformat:2 }} €</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Actions et contacts -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-phone-alt"></i> Contacts</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6>Client</h6>
+                        <p class="mb-1">{{ rdv.contact_client }}</p>
+                        <small class="text-muted">{{ rdv.demande_location.client.nom_complet }}</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>Agence</h6>
+                        <p class="mb-1">{{ rdv.contact_agence }}</p>
+                        <small class="text-muted">Contact TECH IIBS</small>
+                    </div>
+                    
+                    {% if rdv.cree_par.profile.telephone %}
+                    <div>
+                        <h6>Responsable</h6>
+                        <p class="mb-1">{{ rdv.cree_par.profile.telephone }}</p>
+                        <small class="text-muted">{{ rdv.cree_par.get_full_name }}</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-cogs"></i> Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if rdv.statut == 'planifie' %}
+                        <a href="{% url 'confirmer_rendez_vous' rdv.pk %}" class="btn btn-success">
+                            <i class="fas fa-check"></i> Confirmer
+                        </a>
+                        {% endif %}
+                        
+                        {% if rdv.peut_etre_annule %}
+                        <a href="{% url 'annuler_rendez_vous' rdv.pk %}" class="btn btn-danger">
+                            <i class="fas fa-times"></i> Annuler
+                        </a>
+                        {% endif %}
+                        
+                        <a href="{% url 'traiter_demandes' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-list"></i> Voir la demande
+                        </a>
+                        
+                        <a href="{% url 'logement_detail' rdv.demande_location.logement.reference %}" 
+                           class="btn btn-outline-info" target="_blank">
+                            <i class="fas fa-home"></i> Voir le logement
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Détails de la demande -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-file-alt"></i> Détails de la demande</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Date début souhaitée:</strong><br>
+                        {{ rdv.demande_location.date_debut_souhaitee|date:"d/m/Y" }}
+                    </p>
+                    <p><strong>Durée souhaitée:</strong><br>
+                        {{ rdv.demande_location.duree_souhaitee }} mois
+                    </p>
+                    <p><strong>Date demande:</strong><br>
+                        {{ rdv.demande_location.date_demande|date:"d/m/Y H:i" }}
+                    </p>
+                    
+                    {% if rdv.demande_location.notes %}
+                    <p><strong>Notes client:</strong><br>
+                         <small>{{ rdv.demande_location.notes|truncatechars:100 }}</small>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+</div>{% endblock %}
+{% block extra_js %}
+<script> document.addEventListener('DOMContentLoaded', function() { 
+    // Formatage des dates pour le fuseau horaire local const dates = document.querySelectorAll('.date-format'); dates.forEach(dateEl => { const dateStr = dateEl.textContent; if (dateStr) { const date = new Date(dateStr); dateEl.textContent = date.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }); } }); }); </script>
+ });
+</script> 
+ 
+{% endblock %}

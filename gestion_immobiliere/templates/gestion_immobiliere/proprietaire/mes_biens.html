@@ -1,0 +1,194 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/proprietaire/mes_biens.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+
+{% block title %}Mes biens - TECH IIBS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-0">
+                        <i class="fas fa-home text-primary"></i> Mes biens immobiliers
+                    </h1>
+                    <p class="text-muted mb-0">{{ proprietaire.nom_complet }} • {{ logements.count }} bien{{ logements.count|pluralize }}</p>
+                </div>
+                <div>
+                    <a href="{% url 'ajouter_bien' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Ajouter un bien
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        {% with stats=logements|groupby:"etat" %}
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Disponibles</h6>
+                            <p class="h4 mb-0">{{ stats.disponible|length|default:0 }}</p>
+                        </div>
+                        <i class="fas fa-home fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Loués</h6>
+                            <p class="h4 mb-0">{{ stats.loue|length|default:0 }}</p>
+                        </div>
+                        <i class="fas fa-key fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">En maintenance</h6>
+                            <p class="h4 mb-0">{{ stats.maintenance|length|default:0 }}</p>
+                        </div>
+                        <i class="fas fa-tools fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-secondary text-white">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Archivés</h6>
+                            <p class="h4 mb-0">{{ stats.archive|length|default:0 }}</p>
+                        </div>
+                        <i class="fas fa-archive fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-12">
+            <form method="get" class="row g-2">
+                <div class="col-md-4">
+                    <select name="etat" class="form-select">
+                        <option value="">Tous les etats</option>
+                        <option value="disponible" {% if request.GET.etat == 'disponible' %}selected{% endif %}>Disponible</option>
+                        <option value="loue" {% if request.GET.etat == 'loue' %}selected{% endif %}>Loue</option>
+                        <option value="maintenance" {% if request.GET.etat == 'maintenance' %}selected{% endif %}>Maintenance</option>
+                        <option value="archive" {% if request.GET.etat == 'archive' %}selected{% endif %}>Archive</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-primary w-100" type="submit">Filtrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Liste des biens -->
+    <div class="row">
+        {% if logements %}
+            {% for logement in logements %}
+            <div class="col-md-4 col-lg-3 mb-4">
+                <div class="card h-100">
+                    <!-- Image -->
+                    {% with logement.images.first as image %}
+                    {% if image %}
+                    <img src="{{ image.image.url }}" 
+                         class="card-img-top" 
+                         alt="{{ logement.reference }}"
+                         style="height: 150px; object-fit: cover;">
+                    {% else %}
+                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                         style="height: 150px;">
+                        <i class="fas fa-home fa-2x text-muted"></i>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                    
+                    <!-- Badge état -->
+                    <span class="position-absolute top-0 end-0 m-2 badge bg-{% if logement.etat == 'disponible' %}success{% elif logement.etat == 'loue' %}warning{% elif logement.etat == 'maintenance' %}danger{% else %}secondary{% endif %}">
+                        {{ logement.get_etat_display }}
+                    </span>
+                    
+                    <div class="card-body">
+                        <h5 class="card-title mb-1">{{ logement.reference }}</h5>
+                        <p class="card-text small text-muted mb-2">
+                            <i class="fas fa-map-marker-alt"></i> {{ logement.zone.nom }}
+                        </p>
+                        
+                        <div class="mb-3">
+                            <span class="badge bg-light text-dark me-1">
+                                {{ logement.get_type_logement_display }}
+                            </span>
+                            <span class="badge bg-light text-dark">
+                                {{ logement.surface }} m²
+                            </span>
+                        </div>
+                        
+                        <!-- Contrat de gestion -->
+                        {% if logement.contrat_gestion %}
+                        <div class="alert alert-success small mb-3">
+                            <i class="fas fa-file-contract"></i> Contrat actif
+                            <div class="mt-1">
+                                <small>{{ logement.contrat_gestion.montant_mensuel|floatformat:2 }} FCFA/mois</small>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning small mb-3">
+                            <i class="fas fa-exclamation-triangle"></i> Pas de contrat
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Adresse -->
+                        <p class="card-text small">
+                            {{ logement.adresse|truncatechars:50 }}
+                        </p>
+                    </div>
+                    
+                    <div class="card-footer bg-transparent">
+                        <div class="btn-group w-100">
+                            <a href="#" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye"></i> Détails
+                            </a>
+                            <a href="#" class="btn btn-outline-info btn-sm">
+                                <i class="fas fa-edit"></i> Modifier
+                            </a>
+                            <a href="#" class="btn btn-outline-danger btn-sm">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-home fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Vous n'avez pas encore de biens immobiliers</h5>
+                <p class="text-muted mb-4">Commencez par ajouter votre premier bien immobilier.</p>
+                <a href="{% url 'ajouter_bien' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Ajouter un bien
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

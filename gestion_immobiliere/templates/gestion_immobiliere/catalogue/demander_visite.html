@@ -1,0 +1,162 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/catalogue/demander_visite.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+
+{% block title %}Demander une visite - {{ logement.reference }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- En-tête -->
+            <div class="d-flex align-items-center mb-4">
+                <a href="{% url 'logement_detail' logement.reference %}" class="btn btn-outline-secondary me-3">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div>
+                    <h1 class="h4 mb-0">Demander une visite</h1>
+                    <p class="text-muted mb-0">{{ logement.reference }} - {{ logement.adresse|truncatechars:30 }}</p>
+                </div>
+            </div>
+
+            <!-- Formulaire -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle"></i> 
+                        Une fois votre demande envoyée, notre équipe vous contactera 
+                        dans les 24h pour convenir d'un rendez-vous.
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Informations logement -->
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4 text-center">
+                                        {% with logement.images.first as image %}
+                                        {% if image %}
+                                        <img src="{{ image.image.url }}" 
+                                             class="img-fluid rounded" 
+                                             alt="{{ logement.reference }}"
+                                             style="max-height: 150px;">
+                                        {% else %}
+                                        <div class="bg-light rounded d-flex align-items-center justify-content-center" 
+                                             style="height: 150px;">
+                                            <i class="fas fa-home fa-2x text-muted"></i>
+                                        </div>
+                                        {% endif %}
+                                        {% endwith %}
+                                    </div>
+                                    <div class="col-md-8">
+                                        <h5 class="card-title">{{ logement.reference }}</h5>
+                                        <p class="card-text small mb-2">
+                                            <i class="fas fa-map-marker-alt"></i> {{ logement.adresse }}
+                                        </p>
+                                        <div class="d-flex gap-2 mb-2">
+                                            <span class="badge bg-success">{{ logement.get_type_logement_display }}</span>
+                                            <span class="badge bg-info">{{ logement.zone.nom }}</span>
+                                            <span class="badge bg-warning">{{ logement.surface }} m²</span>
+                                        </div>
+                                        <p class="mb-0">
+                                            <strong>Prix : </strong>
+                                            {% if logement.contrat_gestion %}
+{{ logement.contrat_gestion.prix_loyer_total|floatformat:2 }} FCFA/mois                                            {% else %}
+                                                Non disponible
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Date de visite souhaitée -->
+                        <div class="mb-3">
+                            <label for="date_visite" class="form-label">
+                                <i class="fas fa-calendar-alt"></i> Date de visite souhaitée *
+                            </label>
+                            <input type="date" 
+                                   class="form-control" 
+                                   id="date_visite" 
+                                   name="date_visite"
+                                   required
+                                   min="{{ today|date:'Y-m-d' }}">
+                            <small class="form-text text-muted">
+                                Sélectionnez une date à partir de demain
+                            </small>
+                        </div>
+
+                        <!-- Heure préférée -->
+                        <div class="mb-3">
+                            <label for="heure_visite" class="form-label">
+                                <i class="fas fa-clock"></i> Heure préférée
+                            </label>
+                            <select class="form-select" id="heure_visite" name="heure_visite">
+                                <option value="">Indifférent</option>
+                                <option value="09:00">Matin (9h - 12h)</option>
+                                <option value="14:00">Après-midi (14h - 17h)</option>
+                                <option value="18:00">Soir (18h - 20h)</option>
+                            </select>
+                        </div>
+
+                        <!-- Message -->
+                        <div class="mb-4">
+                            <label for="message" class="form-label">
+                                <i class="fas fa-comment"></i> Message (optionnel)
+                            </label>
+                            <textarea class="form-control" 
+                                      id="message" 
+                                      name="message" 
+                                      rows="4"
+                                      placeholder="Informations complémentaires, questions, etc."></textarea>
+                        </div>
+
+                        <!-- Conditions -->
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="conditions" required>
+                                <label class="form-check-label" for="conditions">
+                                    J'accepte que TECH IIBS me contacte par téléphone ou email 
+                                    pour organiser cette visite et pour les suites éventuelles.
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Boutons -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-paper-plane"></i> Envoyer la demande
+                            </button>
+                            <a href="{% url 'logement_detail' logement.reference %}" 
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Définir la date minimale à demain
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        const dateInput = document.getElementById('date_visite');
+        const minDate = tomorrow.toISOString().split('T')[0];
+        dateInput.min = minDate;
+        
+        // Si l'input est vide, mettre demain par défaut
+        if (!dateInput.value) {
+            dateInput.value = minDate;
+        }
+    });
+</script>
+{% endblock %}

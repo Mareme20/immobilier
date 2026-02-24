@@ -1,0 +1,118 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/responsable_location/valider_demande.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+
+{% block title %}Valider la demande - TECH IIBS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-check-circle"></i> Valider la demande #{{ demande.id }}</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Résumé de la demande -->
+                    <div class="alert alert-info mb-4">
+                        <h5><i class="fas fa-info-circle"></i> Résumé de la demande</h5>
+                        <p class="mb-1"><strong>Client:</strong> {{ demande.client.nom_complet }}</p>
+                        <p class="mb-1"><strong>Logement:</strong> {{ demande.logement.reference }}</p>
+                        <p class="mb-1"><strong>Période:</strong> {{ demande.date_debut_souhaitee|date:"d/m/Y" }} ({{ demande.duree_souhaitee }} mois)</p>
+                        <p class="mb-0"><strong>Date demande:</strong> {{ demande.date_demande|date:"d/m/Y H:i" }}</p>
+                    </div>
+
+                    <!-- Calcul du loyer -->
+                    {% with contrat=demande.logement.contrat_gestion %}
+                    {% if contrat %}
+                    <div class="alert alert-warning mb-4">
+                        <h5><i class="fas fa-calculator"></i> Calcul du loyer</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1">Montant propriétaire: {{ contrat.montant_mensuel|floatformat:2 }} FCFA</p>
+                                <p class="mb-1">Forfait agence: {{ demande.logement.zone.forfait_agence|floatformat:2 }} FCFA</p>
+                                <p class="mb-0 fw-bold">Total loyer: {{ contrat.prix_loyer_total|floatformat:2 }} FCFA/mois</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1">Caution: {{ demande.logement.caution_fixe|floatformat:2 }} FCFA</p>
+                                <p class="mb-0">Total 1er mois: {{ contrat.prix_loyer_total|add:demande.logement.caution_fixe|floatformat:2 }} FCFA</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-danger mb-4">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        Aucun contrat de gestion actif pour ce logement !
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+
+                    <!-- Informations client -->
+                    <div class="mb-4">
+                        <h5><i class="fas fa-user"></i> Informations client</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Nom complet:</strong> {{ demande.client.nom_complet }}</p>
+                                <p><strong>Téléphone:</strong> {{ demande.client.telephone }}</p>
+                                <p><strong>Adresse:</strong> {{ demande.client.adresse }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Profession:</strong> {{ demande.client.profession|default:"Non renseigné" }}</p>
+                                <p><strong>Employeur:</strong> {{ demande.client.employeur|default:"Non renseigné" }}</p>
+                                <p><strong>Revenu:</strong> {{ demande.client.revenu_mensuel|floatformat:2|default:"Non renseigné" }} FCFA/mois</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes de la demande -->
+                    {% if demande.notes %}
+                    <div class="mb-4">
+                        <h5><i class="fas fa-sticky-note"></i> Notes du client</h5>
+                        <div class="alert alert-light">
+                            {{ demande.notes }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Formulaire de validation -->
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="notes_validation" class="form-label">
+                                <i class="fas fa-comment"></i> Notes de validation (optionnel)
+                            </label>
+                            <textarea name="notes_validation" 
+                                      id="notes_validation" 
+                                      class="form-control" 
+                                      rows="3"
+                                      placeholder="Ajoutez des notes pour cette validation..."></textarea>
+                        </div>
+
+                        <div class="alert alert-success">
+                            <div class="form-check">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       id="confirm_validation" 
+                                       required>
+                                <label class="form-check-label" for="confirm_validation">
+                                    Je confirme la validation de cette demande de location.
+                                    Le logement sera marqué comme "loué" et un contrat pourra être créé.
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-check"></i> Valider définitivement
+                            </button>
+                            <a href="{% url 'traiter_demandes' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

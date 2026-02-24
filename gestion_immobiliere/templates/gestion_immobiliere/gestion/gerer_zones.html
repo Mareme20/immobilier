@@ -1,0 +1,146 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/gestion/gerer_zones.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+
+{% block title %}Gérer les zones - TECH IIBS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h2 mb-0">
+                <i class="fas fa-map text-primary"></i> Gestion des zones
+            </h1>
+            <p class="text-muted mb-0">{{ zones.count }} zone{{ zones.count|pluralize }}</p>
+        </div>
+    </div>
+
+    <!-- Formulaire d'ajout -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">{% if zone %}Modifier la zone{% else %}Ajouter une zone{% endif %}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Nom *</label>
+                            {{ form.nom }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Forfait agence (FCFA) *</label>
+                            {{ form.forfait_agence }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            {{ form.description }}
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Enregistrer
+                        </button>
+                        {% if zone %}
+                        <a href="{% url 'gerer_zones' %}" class="btn btn-outline-secondary">
+                            Annuler
+                        </a>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Liste des zones</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if zones %}
+                    <div class="list-group list-group-flush">
+                        {% for zone_item in zones %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ zone_item.nom }}</h6>
+                                    <p class="mb-1 small text-muted">{{ zone_item.description|truncatechars:50 }}</p>
+                                    <span class="badge bg-info">{{ zone_item.forfait_agence|floatformat:2 }} FCFA</span>
+                                    <span class="badge bg-light text-dark ms-2">
+                                        {{ zone_item.logements.count }} logement{{ zone_item.logements.count|pluralize }}
+                                    </span>
+                                </div>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'modifier_zone' zone_item.pk %}" class="btn btn-outline-info">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" 
+                                            class="btn btn-outline-danger"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#deleteZoneModal{{ zone_item.pk }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Modal suppression -->
+                            <div class="modal fade" id="deleteZoneModal{{ zone_item.pk }}" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Supprimer la zone</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>Supprimer la zone "{{ zone_item.nom }}" ?</p>
+                                            {% if zone_item.logements.count > 0 %}
+                                            <div class="alert alert-danger">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                                Impossible de supprimer cette zone car elle contient 
+                                                {{ zone_item.logements.count }} logement{{ zone_item.logements.count|pluralize }}.
+                                            </div>
+                                            {% else %}
+                                            <div class="alert alert-warning">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                                Cette action est irréversible.
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                            {% if zone_item.logements.count == 0 %}
+                                            <form method="post" action="{% url 'supprimer_zone' zone_item.pk %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-danger">Supprimer</button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-map fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Aucune zone définie</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ajouter classes Bootstrap
+        document.querySelectorAll('input, textarea').forEach(field => {
+            if (!field.classList.contains('form-control')) {
+                field.classList.add('form-control');
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,210 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/gestion/gerer_contrats_gestion.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+
+{% block title %}Gérer les contrats de gestion - TECH IIBS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-0">
+                        <i class="fas fa-file-contract text-primary"></i> Contrats de gestion
+                    </h1>
+                    <p class="text-muted mb-0">{{ contrats.count }} contrat{{ contrats.count|pluralize }}</p>
+                </div>
+                <div>
+                    <a href="{% url 'ajouter_contrat_gestion' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nouveau contrat
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row g-2">
+                        <div class="col-md-2">
+                            <select name="etat" class="form-select">
+                                <option value="">Tous états</option>
+                                <option value="en_cours" {% if request.GET.etat == 'en_cours' %}selected{% endif %}>En cours</option>
+                                <option value="annule" {% if request.GET.etat == 'annule' %}selected{% endif %}>Annulé</option>
+                                <option value="termine" {% if request.GET.etat == 'termine' %}selected{% endif %}>Terminé</option>
+                                <option value="en_attente" {% if request.GET.etat == 'en_attente' %}selected{% endif %}>En attente</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <input type="date" name="date_debut" class="form-control" placeholder="Date début" value="{{ request.GET.date_debut }}">
+                        </div>
+                        <div class="col-md-2">
+                            <select name="proprietaire" class="form-select">
+                                <option value="">Tous propriétaires</option>
+                                {% for proprietaire in proprietaires %}
+                                <option value="{{ proprietaire.pk }}" {% if request.GET.proprietaire == proprietaire.pk|stringformat:"s" %}selected{% endif %}>
+                                    {{ proprietaire.nom_complet }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" name="search" class="form-control" placeholder="Rechercher..." value="{{ request.GET.search }}">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search"></i> Filtrer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau des contrats -->
+    <div class="card">
+        <div class="card-body p-0">
+            {% if contrats %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Logement</th>
+                            <th>Propriétaire</th>
+                            <th>Période</th>
+                            <th>Montants</th>
+                            <th>État</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for contrat in contrats %}
+                        <tr>
+                            <td>
+                                <strong>#{{ contrat.id }}</strong>
+                                <div class="text-muted xsmall">
+                                    {{ contrat.date_creation|date:"d/m/Y" }}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% with contrat.logement.images.first as image %}
+                                    {% if image %}
+                                    <img src="{{ image.image.url }}" 
+                                         class="rounded me-2" 
+                                         alt="{{ contrat.logement.reference }}"
+                                         style="width: 40px; height: 40px; object-fit: cover;">
+                                    {% else %}
+                                    <div class="bg-light rounded d-flex align-items-center justify-content-center me-2" 
+                                         style="width: 40px; height: 40px;">
+                                        <i class="fas fa-home text-muted"></i>
+                                    </div>
+                                    {% endif %}
+                                    {% endwith %}
+                                    <div>
+                                        <div>{{ contrat.logement.reference }}</div>
+                                        <div class="text-muted xsmall">{{ contrat.logement.zone.nom }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>{{ contrat.proprietaire.nom_complet }}</div>
+                                <div class="text-muted xsmall">{{ contrat.proprietaire.telephone }}</div>
+                            </td>
+                            <td>
+                                <div>{{ contrat.date_debut|date:"d/m/Y" }}</div>
+                                <div class="text-muted xsmall">au {{ contrat.date_fin|date:"d/m/Y" }}</div>
+                                {% if contrat.est_actif %}
+                                <span class="badge bg-light text-dark xsmall">
+                                    {{ contrat.jours_restants }} jours restants
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="mb-1">
+                                    <span class="badge bg-light text-dark">
+                                        Proprio: {{ contrat.montant_mensuel|floatformat:2 }}FCFA
+                                    </span>
+                                </div>
+                                <div>
+                                    <span class="badge bg-info text-white">
+                                        Total: {{ contrat.prix_loyer_total|floatformat:2 }}FCFA
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                {% if contrat.etat == 'en_cours' %}
+                                <span class="badge bg-success">En cours</span>
+                                {% elif contrat.etat == 'annule' %}
+                                <span class="badge bg-danger">Annulé</span>
+                                {% elif contrat.etat == 'termine' %}
+                                <span class="badge bg-secondary">Terminé</span>
+                                {% elif contrat.etat == 'en_attente' %}
+                                <span class="badge bg-warning">En attente</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'modifier_contrat_gestion' contrat.pk %}" 
+                                       class="btn btn-outline-info" title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" 
+                                            class="btn btn-outline-danger" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#deleteModal{{ contrat.pk }}"
+                                            title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                                
+                                <!-- Modal suppression -->
+                                <div class="modal fade" id="deleteModal{{ contrat.pk }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Supprimer le contrat</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Supprimer le contrat #{{ contrat.id }} ?</p>
+                                                <div class="alert alert-warning">
+                                                    <i class="fas fa-exclamation-triangle"></i>
+                                                    Attention: Cette action est irréversible.
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                <form method="post" action="{% url 'supprimer_contrat_gestion' contrat.pk %}">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-file-contract fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Aucun contrat de gestion</h5>
+                <p class="text-muted mb-4">Commencez par ajouter un contrat de gestion.</p>
+                <a href="{% url 'ajouter_contrat_gestion' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Ajouter un contrat
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

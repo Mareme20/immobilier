@@ -1,0 +1,760 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/base.html -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TECH IIBS - Location Immobilière{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            padding-top: 56px; /* Pour la navbar fixe */
+        }
+        .navbar-brand {
+            font-weight: bold;
+            color: #0d6efd !important;
+        }
+        .footer {
+            background-color: #343a40;
+            color: white;
+            padding: 2rem 0;
+            margin-top: 3rem;
+        }
+        .card {
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            border: none;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .navbar {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+        .badge-notification {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            font-size: 0.6rem;
+            padding: 0.2rem 0.4rem;
+        }
+        .sidebar {
+            background: #f8f9fa;
+            min-height: calc(100vh - 56px);
+            border-right: 1px solid #dee2e6;
+        }
+        .sidebar-sticky {
+            position: sticky;
+            top: 56px;
+            height: calc(100vh - 56px);
+            overflow-y: auto;
+        }
+        .sidebar .nav-link {
+            color: #495057;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.25rem;
+            transition: all 0.2s;
+        }
+        .sidebar .nav-link:hover {
+            background-color: #e9ecef;
+            color: #0d6efd;
+        }
+        .sidebar .nav-link.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .content-wrapper {
+            padding: 2rem 0;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+            body {
+                padding-top: 56px;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation principale -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'home' %}">
+                <i class="fas fa-building me-2"></i> TECH IIBS
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarMain">
+                <!-- Navigation gauche -->
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'catalogue' %}">
+                            <i class="fas fa-search"></i> Catalogue
+                        </a>
+                    </li>
+                    
+                    {% if user.is_authenticated %}
+                        {% with user.profile.role as user_role %}
+                            {% if user_role == 'gestionnaire' %}
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="gestionDropdown" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-cogs"></i> Gestion
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{% url 'gerer_logements' %}">
+                                        <i class="fas fa-home"></i> Logements
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{% url 'gerer_contrats_gestion' %}">
+                                        <i class="fas fa-file-contract"></i> Contrats gestion
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{% url 'gerer_zones' %}">
+                                        <i class="fas fa-map"></i> Zones
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{% url 'admin:index' %}" target="_blank">
+                                        <i class="fas fa-cog"></i> Administration
+                                    </a></li>
+                                </ul>
+                            </li>
+                            
+                            {% elif user_role == 'proprietaire' %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'mes_biens' %}">
+                                    <i class="fas fa-home"></i> Mes biens
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'mes_paiements' %}">
+                                    <i class="fas fa-money-check-alt"></i> Mes paiements
+                                </a>
+                            </li>
+                            
+                            {% elif user_role == 'responsable_location' %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'traiter_demandes' %}">
+                                    <i class="fas fa-tasks"></i> Demandes
+                                    {% with count_demandes=user.demandes_validees.count %}
+                                        {% if count_demandes > 0 %}
+                                        <span class="badge bg-danger badge-notification">{{ count_demandes }}</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </a>
+                            </li>
+                            
+                            {% elif user_role == 'responsable_financier' %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'gerer_paiements' %}">
+                                    <i class="fas fa-money-bill-wave"></i> Paiements
+                                    {% with retards=0 %}
+                                        {% if retards > 0 %}
+                                        <span class="badge bg-danger badge-notification">{{ retards }}</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </a>
+                            </li>
+                            
+                            {% elif user_role == 'client' %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'mes_demandes' %}">
+                                    <i class="fas fa-list"></i> Mes demandes
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'mes_contrats' %}">
+                                    <i class="fas fa-file-contract"></i> Mes contrats
+                                </a>
+                            </li>
+                            {% endif %}
+                        {% endwith %}
+                    {% endif %}
+                </ul>
+                
+                <!-- Navigation droite -->
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                    <!-- Notifications -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-bell"></i>
+                            {% with notifications_count=0 %}
+                                {% if notifications_count > 0 %}
+                                <span class="badge bg-danger badge-notification">{{ notifications_count }}</span>
+                                {% endif %}
+                            {% endwith %}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown">
+                            <li><h6 class="dropdown-header">Notifications</h6></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i class="fas fa-check-circle text-success"></i> Demande validée
+                                <small class="text-muted d-block">Il y a 2 heures</small>
+                            </a></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i class="fas fa-exclamation-triangle text-warning"></i> Paiement en retard
+                                <small class="text-muted d-block">Hier</small>
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-center" href="#">
+                                Voir toutes les notifications
+                            </a></li>
+                        </ul>
+                    </li>
+                    
+                    <!-- Profil utilisateur -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle"></i> 
+                            {% if user.first_name and user.last_name %}
+                                {{ user.first_name }} {{ user.last_name }}
+                            {% elif user.first_name %}
+                                {{ user.first_name }}
+                            {% else %}
+                                {{ user.username }}
+                            {% endif %}
+                            <small class="text-muted ms-1">
+                                ({{ user.profile.get_role_display }})
+                            </small>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="{% url 'mon_profil' %}">
+                                <i class="fas fa-user"></i> Mon profil
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'modifier_profil' %}">
+                                <i class="fas fa-user-edit"></i> Modifier profil
+                            </a></li>
+                            
+                            {% with user.profile.role as user_role %}
+                                {% if user_role == 'gestionnaire' %}
+                                <li><a class="dropdown-item" href="{% url 'gestionnaire_dashboard' %}">
+                                    <i class="fas fa-tachometer-alt"></i> Tableau de bord
+                                </a></li>
+                                {% elif user_role == 'proprietaire' %}
+                                <li><a class="dropdown-item" href="{% url 'proprietaire_dashboard' %}">
+                                    <i class="fas fa-tachometer-alt"></i> Tableau de bord
+                                </a></li>
+                                {% elif user_role == 'responsable_location' %}
+                                <li><a class="dropdown-item" href="{% url 'rl_dashboard' %}">
+                                    <i class="fas fa-tachometer-alt"></i> Tableau de bord
+                                </a></li>
+                                {% elif user_role == 'responsable_financier' %}
+                                <li><a class="dropdown-item" href="{% url 'rf_dashboard' %}">
+                                    <i class="fas fa-tachometer-alt"></i> Tableau de bord
+                                </a></li>
+                                {% elif user_role == 'client' %}
+                                <li><a class="dropdown-item" href="{% url 'client_dashboard' %}">
+                                    <i class="fas fa-tachometer-alt"></i> Tableau de bord
+                                </a></li>
+                                {% endif %}
+                            {% endwith %}
+                            
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'logout' %}">
+                                <i class="fas fa-sign-out-alt"></i> Déconnexion
+                            </a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <!-- Non connecté -->
+                    <li class="nav-item">
+                        <a class="btn btn-outline-primary me-2" href="{% url 'login' %}">
+                            <i class="fas fa-sign-in-alt"></i> Connexion
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-primary" href="{% url 'register' %}">
+                            <i class="fas fa-user-plus"></i> Inscription
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenu principal -->
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar (optionnel, selon le rôle) -->
+            {% if user.is_authenticated %}
+            {% with user.profile.role as user_role %}
+                {% if user_role == 'gestionnaire' %}
+                <div class="col-md-3 col-lg-2 d-none d-md-block sidebar">
+                    <div class="sidebar-sticky">
+                        <h6 class="px-3 mt-3 mb-2 text-uppercase text-muted">
+                            <i class="fas fa-tachometer-alt me-2"></i> Tableau de bord
+                        </h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'gestionnaire_dashboard' %}">
+                                    <i class="fas fa-chart-line me-2"></i> Vue d'ensemble
+                                </a>
+                            </li>
+                        </ul>
+                        
+                        <h6 class="px-3 mt-4 mb-2 text-uppercase text-muted">
+                            <i class="fas fa-cogs me-2"></i> Gestion
+                        </h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'gerer_logements' %}">
+                                    <i class="fas fa-home me-2"></i> Logements
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'gerer_contrats_gestion' %}">
+                                    <i class="fas fa-file-contract me-2"></i> Contrats
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'gerer_zones' %}">
+                                    <i class="fas fa-map me-2"></i> Zones
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-users me-2"></i> Utilisateurs
+                                </a>
+                            </li>
+                        </ul>
+                        
+                        <h6 class="px-3 mt-4 mb-2 text-uppercase text-muted">
+                            <i class="fas fa-chart-bar me-2"></i> Rapports
+                        </h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-file-invoice-dollar me-2"></i> Financier
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-chart-pie me-2"></i> Statistiques
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-9 col-lg-10 content-wrapper">
+                {% elif user_role == 'proprietaire' %}
+                <div class="col-md-3 col-lg-2 d-none d-md-block sidebar">
+                    <div class="sidebar-sticky">
+                        <h6 class="px-3 mt-3 mb-2 text-uppercase text-muted">
+                            <i class="fas fa-tachometer-alt me-2"></i> Tableau de bord
+                        </h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'proprietaire_dashboard' %}">
+                                    <i class="fas fa-chart-line me-2"></i> Vue d'ensemble
+                                </a>
+                            </li>
+                        </ul>
+                        
+                        <h6 class="px-3 mt-4 mb-2 text-uppercase text-muted">
+                            <i class="fas fa-home me-2"></i> Mes biens
+                        </h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'mes_biens' %}">
+                                    <i class="fas fa-list me-2"></i> Liste des biens
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'ajouter_bien' %}">
+                                    <i class="fas fa-plus-circle me-2"></i> Ajouter un bien
+                                </a>
+                            </li>
+                        </ul>
+                        
+                        <h6 class="px-3 mt-4 mb-2 text-uppercase text-muted">
+                            <i class="fas fa-money-check-alt me-2"></i> Finance
+                        </h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'mes_paiements' %}">
+                                    <i class="fas fa-file-invoice-dollar me-2"></i> Mes paiements
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-chart-line me-2"></i> Revenus
+                                </a>
+                            </li>
+                        </ul>
+                        
+                        <h6 class="px-3 mt-4 mb-2 text-uppercase text-muted">
+                            <i class="fas fa-file-contract me-2"></i> Contrats
+                        </h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-list me-2"></i> Mes contrats
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-history me-2"></i> Historique
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-9 col-lg-10 content-wrapper">
+                {% elif user_role == 'responsable_location' %}
+                <div class="col-md-3 col-lg-2 d-none d-md-block sidebar">
+                    <div class="sidebar-sticky">
+                        <h6 class="px-3 mt-3 mb-2 text-uppercase text-muted">
+                            <i class="fas fa-tachometer-alt me-2"></i> Tableau de bord
+                        </h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'rl_dashboard' %}">
+                                    <i class="fas fa-chart-line me-2"></i> Vue d'ensemble
+                                </a>
+                            </li>
+                        </ul>
+                        
+                        <h6 class="px-3 mt-4 mb-2 text-uppercase text-muted">
+                            <i class="fas fa-tasks me-2"></i> Demandes
+                        </h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'traiter_demandes' %}">
+                                    <i class="fas fa-inbox me-2"></i> À traiter
+                                    <span class="badge bg-danger float-end">5</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-check-circle me-2"></i> Validées
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-times-circle me-2"></i> Rejetées
+                                </a>
+                            </li>
+                        </ul>
+                        
+                        <h6 class="px-3 mt-4 mb-2 text-uppercase text-muted">
+                            <i class="fas fa-file-contract me-2"></i> Contrats
+                        </h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-file-signature me-2"></i> À signer
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-clock me-2"></i> En attente
+                                </a>
+                            </li>
+                        </ul>
+                        
+                        <h6 class="px-3 mt-4 mb-2 text-uppercase text-muted">
+                            <i class="fas fa-calendar-alt me-2"></i> Visites
+                        </h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-calendar me-2"></i> Calendrier
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-map-marker-alt me-2"></i> À organiser
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-9 col-lg-10 content-wrapper">
+                {% elif user_role == 'responsable_financier' %}
+                <div class="col-md-3 col-lg-2 d-none d-md-block sidebar">
+                    <div class="sidebar-sticky">
+                        <h6 class="px-3 mt-3 mb-2 text-uppercase text-muted">
+                            <i class="fas fa-tachometer-alt me-2"></i> Tableau de bord
+                        </h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'rf_dashboard' %}">
+                                    <i class="fas fa-chart-line me-2"></i> Vue d'ensemble
+                                </a>
+                            </li>
+                        </ul>
+                        
+                        <h6 class="px-3 mt-4 mb-2 text-uppercase text-muted">
+                            <i class="fas fa-money-bill-wave me-2"></i> Paiements
+                        </h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'gerer_paiements' %}">
+                                    <i class="fas fa-list me-2"></i> Tous les paiements
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-exclamation-triangle me-2"></i> En retard
+                                    <span class="badge bg-danger float-end">3</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-clock me-2"></i> À venir
+                                </a>
+                            </li>
+                        </ul>
+                        
+                        <h6 class="px-3 mt-4 mb-2 text-uppercase text-muted">
+                            <i class="fas fa-file-invoice-dollar me-2"></i> Facturation
+                        </h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-receipt me-2"></i> Factures
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-file-pdf me-2"></i> Reçus
+                                </a>
+                            </li>
+                        </ul>
+                        
+                        <h6 class="px-3 mt-4 mb-2 text-uppercase text-muted">
+                            <i class="fas fa-chart-bar me-2"></i> Rapports
+                        </h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'rapport_financier' %}">
+                                    <i class="fas fa-chart-pie me-2"></i> Financier
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-chart-line me-2"></i> Statistiques
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-9 col-lg-10 content-wrapper">
+                {% elif user_role == 'client' %}
+                <div class="col-md-3 col-lg-2 d-none d-md-block sidebar">
+                    <div class="sidebar-sticky">
+                        <h6 class="px-3 mt-3 mb-2 text-uppercase text-muted">
+                            <i class="fas fa-tachometer-alt me-2"></i> Tableau de bord
+                        </h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'client_dashboard' %}">
+                                    <i class="fas fa-chart-line me-2"></i> Vue d'ensemble
+                                </a>
+                            </li>
+                        </ul>
+                        
+                        <h6 class="px-3 mt-4 mb-2 text-uppercase text-muted">
+                            <i class="fas fa-search me-2"></i> Recherche
+                        </h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'catalogue' %}">
+                                    <i class="fas fa-home me-2"></i> Catalogue
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-heart me-2"></i> Favoris
+                                </a>
+                            </li>
+                        </ul>
+                        
+                        <h6 class="px-3 mt-4 mb-2 text-uppercase text-muted">
+                            <i class="fas fa-list me-2"></i> Mes demandes
+                        </h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'mes_demandes' %}">
+                                    <i class="fas fa-inbox me-2"></i> Toutes mes demandes
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-clock me-2"></i> En attente
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-check-circle me-2"></i> Acceptées
+                                </a>
+                            </li>
+                        </ul>
+                        
+                        <h6 class="px-3 mt-4 mb-2 text-uppercase text-muted">
+                            <i class="fas fa-file-contract me-2"></i> Mes contrats
+                        </h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'mes_contrats' %}">
+                                    <i class="fas fa-list me-2"></i> Tous mes contrats
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-key me-2"></i> Actifs
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-history me-2"></i> Historique
+                                </a>
+                            </li>
+                        </ul>
+                        
+                        <h6 class="px-3 mt-4 mb-2 text-uppercase text-muted">
+                            <i class="fas fa-money-bill-wave me-2"></i> Paiements
+                        </h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-credit-card me-2"></i> À payer
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-history me-2"></i> Historique
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-9 col-lg-10 content-wrapper">
+                {% else %}
+                <!-- Visiteur ou rôle non défini -->
+                <div class="col-12 content-wrapper">
+                {% endif %}
+            {% endwith %}
+            {% else %}
+            <!-- Non connecté -->
+            <div class="col-12 content-wrapper">
+            {% endif %}
+            
+                <!-- Messages -->
+                {% if messages %}
+                <div class="container">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        <i class="fas 
+                            {% if message.tags == 'success' %}fa-check-circle
+                            {% elif message.tags == 'error' or message.tags == 'danger' %}fa-exclamation-circle
+                            {% elif message.tags == 'warning' %}fa-exclamation-triangle
+                            {% else %}fa-info-circle{% endif %} me-2">
+                        </i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <!-- Contenu de la page -->
+                <main>
+                    {% block content %}
+                    {% endblock %}
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer mt-auto">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5>TECH IIBS</h5>
+                    <p>Agence immobilière spécialisée dans la location de tous types d'hébergement.</p>
+                    <div class="social-links">
+                        <a href="#" class="text-white me-3"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="text-white me-3"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <h5>Contact</h5>
+                    <p><i class="fas fa-map-marker-alt"></i> Dakar, Sénégal</p>
+                    <p><i class="fas fa-phone"></i> +221 76 949 96 38</p>
+                    <p><i class="fas fa-envelope"></i> contact@techiibs.sn</p>
+                </div>
+                <div class="col-md-4">
+                    <h5>Liens rapides</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="{% url 'catalogue' %}" class="text-white">Catalogue</a></li>
+                        <li><a href="#" class="text-white">Conditions générales</a></li>
+                        <li><a href="#" class="text-white">Politique de confidentialité</a></li>
+                        {% if user.is_authenticated %}
+                        <li><a href="{% url 'mon_profil' %}" class="text-white">Mon compte</a></li>
+                        {% else %}
+                        <li><a href="{% url 'login' %}" class="text-white">Connexion</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+            <hr class="bg-white">
+            <div class="text-center">
+                <p>&copy; {% now "Y" %} TECH IIBS. Tous droits réservés.</p>
+                <p class="small">Version 1.0.0</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Activer les tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            })
+            
+            // Marquer le lien actif dans la sidebar
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
+                }
+            });
+            
+            // Auto-dismiss alerts après 5 secondes
+            setTimeout(function() {
+                document.querySelectorAll('.alert').forEach(alert => {
+                    bootstrap.Alert.getInstance(alert)?.close();
+                });
+            }, 5000);
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

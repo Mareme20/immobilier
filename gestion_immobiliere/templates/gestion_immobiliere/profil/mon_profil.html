@@ -1,0 +1,348 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/profil/mon_profil.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+
+{% block title %}Mon profil - TECH IIBS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    .avatar-container {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 5px solid white;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    .avatar-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .stat-card {
+        border: none;
+        border-radius: 10px;
+        transition: transform 0.2s;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    .form-section {
+        background: white;
+        border-radius: 10px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- En-tête du profil -->
+    <div class="profile-header">
+        <div class="row align-items-center">
+            <div class="col-md-3 text-center">
+                <div class="avatar-container mx-auto mb-3">
+                    {% if profile.avatar %}
+                    <img src="{{ profile.avatar.url }}" alt="{{ user.get_full_name }}">
+                    {% else %}
+                    <div class="bg-white d-flex align-items-center justify-content-center h-100">
+                        <i class="fas fa-user fa-4x text-primary"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                <form method="post" enctype="multipart/form-data" id="avatarForm">
+                    {% csrf_token %}
+                    <input type="file" name="avatar" id="avatarInput" class="d-none" accept="image/*">
+                    <label for="avatarInput" class="btn btn-light btn-sm">
+                        <i class="fas fa-camera"></i> Changer la photo
+                    </label>
+                </form>
+            </div>
+            <div class="col-md-9">
+                <h1 class="h2 mb-2">{{ user.get_full_name|default:user.username }}</h1>
+                <p class="mb-1">
+                    <i class="fas fa-user-tag"></i> 
+                    <span class="badge bg-light text-dark">{{ profile.get_role_display }}</span>
+                </p>
+                <p class="mb-1">
+                    <i class="fas fa-envelope"></i> {{ user.email }}
+                </p>
+                <p class="mb-1">
+                    <i class="fas fa-phone"></i> {{ profile.telephone|default:"Non renseigné" }}
+                </p>
+                <p class="mb-0">
+                    <i class="fas fa-calendar-alt"></i> 
+                    Membre depuis {{ profile.date_inscription|date:"d/m/Y" }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques selon le rôle -->
+    <div class="row mb-4">
+        {% if profile.role == 'client' %}
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Demandes actives</h6>
+                            <p class="h3 mb-0">{{ profile.client.demandes_location.count }}</p>
+                        </div>
+                        <i class="fas fa-list fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Contrats actifs</h6>
+                            <p class="h3 mb-0">{{ profile.client.contrats_location.count }}</p>
+                        </div>
+                        <i class="fas fa-file-contract fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% elif profile.role == 'proprietaire' %}
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Biens immobiliers</h6>
+                            <p class="h3 mb-0">{{ profile.proprietaire.logements.count }}</p>
+                        </div>
+                        <i class="fas fa-home fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Contrats actifs</h6>
+                            <p class="h3 mb-0">{{ profile.proprietaire.contrats_gestion.count }}</p>
+                        </div>
+                        <i class="fas fa-file-signature fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card bg-secondary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Membre depuis</h6>
+                            <p class="h4 mb-0">{{ profile.date_inscription|date:"m/Y" }}</p>
+                        </div>
+                        <i class="fas fa-calendar fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulaire d'édition -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="form-section">
+                <h4 class="mb-4 border-bottom pb-2">
+                    <i class="fas fa-user-edit text-primary"></i> Informations personnelles
+                </h4>
+                
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Prénom</label>
+                            {{ user_form.first_name }}
+                            {% if user_form.first_name.errors %}
+                            <div class="invalid-feedback d-block">{{ user_form.first_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nom</label>
+                            {{ user_form.last_name }}
+                            {% if user_form.last_name.errors %}
+                            <div class="invalid-feedback d-block">{{ user_form.last_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        {{ user_form.email }}
+                        {% if user_form.email.errors %}
+                        <div class="invalid-feedback d-block">{{ user_form.email.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Téléphone</label>
+                        {{ profile_form.telephone }}
+                        {% if profile_form.telephone.errors %}
+                        <div class="invalid-feedback d-block">{{ profile_form.telephone.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Date de naissance</label>
+                        {{ profile_form.date_naissance }}
+                        {% if profile_form.date_naissance.errors %}
+                        <div class="invalid-feedback d-block">{{ profile_form.date_naissance.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Adresse</label>
+                        {{ profile_form.adresse }}
+                        {% if profile_form.adresse.errors %}
+                        <div class="invalid-feedback d-block">{{ profile_form.adresse.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Photo de profil</label>
+                        {{ profile_form.avatar }}
+                        {% if profile_form.avatar.errors %}
+                        <div class="invalid-feedback d-block">{{ profile_form.avatar.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Enregistrer les modifications
+                        </button>
+                        <a href="{% url 'change_password' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-key"></i> Changer le mot de passe
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Informations supplémentaires selon le rôle -->
+        <div class="col-lg-4">
+            {% if profile.role == 'proprietaire' %}
+            <div class="form-section">
+                <h5 class="mb-3">
+                    <i class="fas fa-university text-info"></i> Informations bancaires
+                </h5>
+                <div class="alert alert-info">
+                    <p class="mb-1"><strong>Numéro fiscal:</strong></p>
+                    <p>{{ profile.proprietaire.numero_fiscal|default:"Non renseigné" }}</p>
+                    
+                    <p class="mb-1"><strong>RIB:</strong></p>
+                    <p>{{ profile.proprietaire.rib|default:"Non renseigné" }}</p>
+                    
+                    <div class="text-center mt-3">
+                        <button class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-edit"></i> Modifier
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% elif profile.role == 'client' %}
+            <div class="form-section">
+                <h5 class="mb-3">
+                    <i class="fas fa-briefcase text-success"></i> Informations professionnelles
+                </h5>
+                <div class="alert alert-success">
+                    <p class="mb-1"><strong>Profession:</strong></p>
+                    <p>{{ profile.client.profession|default:"Non renseignée" }}</p>
+                    
+                    <p class="mb-1"><strong>Employeur:</strong></p>
+                    <p>{{ profile.client.employeur|default:"Non renseigné" }}</p>
+                    
+                    <div class="text-center mt-3">
+                        <button class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-edit"></i> Modifier
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Sécurité du compte -->
+            <div class="form-section">
+                <h5 class="mb-3">
+                    <i class="fas fa-shield-alt text-warning"></i> Sécurité du compte
+                </h5>
+                <div class="list-group">
+                    <a href="{% url 'change_password' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-key me-2"></i> Changer le mot de passe
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <i class="fas fa-history me-2"></i> Historique de connexion
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action text-danger">
+                        <i class="fas fa-user-times me-2"></i> Désactiver le compte
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Gestion du changement d'avatar
+        const avatarInput = document.getElementById('avatarInput');
+        const avatarForm = document.getElementById('avatarForm');
+        
+        if (avatarInput) {
+            avatarInput.addEventListener('change', function() {
+                avatarForm.submit();
+            });
+        }
+        
+        // Aperçu de l'avatar avant upload
+        const avatarPreview = document.querySelector('.avatar-container img');
+        const avatarPreviewDefault = document.querySelector('.avatar-container .fa-user');
+        
+        avatarInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if (avatarPreview) {
+                        avatarPreview.src = e.target.result;
+                    } else if (avatarPreviewDefault) {
+                        avatarPreviewDefault.parentElement.innerHTML = `<img src="${e.target.result}" alt="Avatar preview">`;
+                    }
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Ajouter classes Bootstrap aux champs
+        document.querySelectorAll('input, select, textarea').forEach(field => {
+            if (!field.classList.contains('form-control') && 
+                field.type !== 'checkbox' && 
+                field.type !== 'radio') {
+                field.classList.add('form-control');
+            }
+        });
+    });
+</script>
+{% endblock %}

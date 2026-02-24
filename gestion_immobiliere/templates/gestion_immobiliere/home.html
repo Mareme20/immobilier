@@ -1,0 +1,298 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/home.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+
+{% block title %}Accueil - TECH IIBS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                    url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80');
+        background-size: cover;
+        background-position: center;
+        color: white;
+        padding: 6rem 0;
+        margin-bottom: 3rem;
+    }
+    .hero-title {
+        font-size: 3rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+    }
+    .hero-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
+    .search-box {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 10px;
+        padding: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .feature-card {
+        height: 100%;
+        transition: transform 0.3s;
+    }
+    .feature-card:hover {
+        transform: translateY(-10px);
+    }
+    .stats-section {
+        background: #f8f9fa;
+        padding: 4rem 0;
+    }
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #0d6efd;
+    }
+    .property-card {
+        transition: transform 0.3s;
+        height: 100%;
+    }
+    .property-card:hover {
+        transform: translateY(-5px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Section Hero -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="hero-title">Trouvez votre logement idéal</h1>
+                <p class="hero-subtitle">
+                    Maisons, appartements, studios, immeubles - TECH IIBS vous accompagne 
+                    dans votre recherche de logement en Côte d'Ivoire.
+                </p>
+                <div class="d-flex gap-3">
+                    <a href="{% url 'catalogue' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-search"></i> Explorer le catalogue
+                    </a>
+                    {% if not user.is_authenticated %}
+                    <a href="{% url 'register' %}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-user-plus"></i> Créer un compte
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="search-box">
+                    <h4 class="mb-3 text-dark">Rechercher un logement</h4>
+                    <form method="get" action="{% url 'catalogue' %}">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <select name="type_logement" class="form-select">
+                                    <option value="">Type de logement</option>
+                                    <option value="maison">Maison</option>
+                                    <option value="appartement">Appartement</option>
+                                    <option value="studio">Studio</option>
+                                    <option value="immeuble">Immeuble</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <select name="zone" class="form-select">
+                                    <option value="">Zone</option>
+                                    <option value="1">Plateau</option>
+                                    <option value="2">Cocody</option>
+                                    <option value="3">Marcory</option>
+                                    <option value="4">Treichville</option>
+                                    <option value="5">Yopougon</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="number" name="surface_min" class="form-control" placeholder="Surface min (m²)">
+                            </div>
+                            <div class="col-md-6">
+                                <input type="number" name="prix_max" class="form-control" placeholder="Budget max (€)">
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-search"></i> Rechercher
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Statistiques -->
+<section class="stats-section">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-3 col-6 mb-4">
+                <div class="stat-number">150+</div>
+                <p class="text-muted mb-0">Logements</p>
+            </div>
+            <div class="col-md-3 col-6 mb-4">
+                <div class="stat-number">50+</div>
+                <p class="text-muted mb-0">Propriétaires</p>
+            </div>
+            <div class="col-md-3 col-6 mb-4">
+                <div class="stat-number">200+</div>
+                <p class="text-muted mb-0">Clients satisfaits</p>
+            </div>
+            <div class="col-md-3 col-6 mb-4">
+                <div class="stat-number">5</div>
+                <p class="text-muted mb-0">Zones couvertes</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Logements en vedette -->
+<section class="py-5">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="h3 mb-0">Logements en vedette</h2>
+                    <a href="{% url 'catalogue' %}" class="btn btn-link">
+                        Voir tout <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            {% for logement in logements_vedette %}
+            <div class="col-md-4 col-lg-2 col-6 mb-4">
+                <div class="card property-card">
+                    {% with logement.images.first as image %}
+                    {% if image %}
+                    <img src="{{ image.image.url }}" 
+                         class="card-img-top" 
+                         alt="{{ logement.reference }}"
+                         style="height: 150px; object-fit: cover;">
+                    {% else %}
+                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                         style="height: 150px;">
+                        <i class="fas fa-home fa-2x text-muted"></i>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                    
+                    <div class="card-body">
+                        <h6 class="card-title mb-1">{{ logement.reference }}</h6>
+                        <p class="card-text small text-muted mb-2">
+                            {{ logement.get_type_logement_display }}
+                        </p>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-light text-dark">
+                                {{ logement.surface }} m²
+                            </span>
+                            <span class="text-primary fw-bold">
+                                {% if logement.prix_mensuel %}
+                                    {{ logement.prix_mensuel|floatformat:0 }} €
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer bg-transparent p-2">
+                        <a href="{% url 'logement_detail' logement.reference %}" 
+                           class="btn btn-outline-primary btn-sm w-100">
+                            Détails
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-home fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Aucun logement en vedette pour le moment</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Pourquoi nous choisir -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <h2 class="h3 mb-3">Pourquoi choisir TECH IIBS ?</h2>
+                <p class="text-muted mb-0">Nous nous engageons à vous offrir le meilleur service</p>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-3 col-6 mb-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-shield-alt fa-3x text-success mb-3"></i>
+                        <h5 class="card-title">Sécurité garantie</h5>
+                        <p class="card-text small">Tous nos contrats sont sécurisés et conformes à la loi.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-6 mb-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-headset fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Support 24/7</h5>
+                        <p class="card-text small">Notre équipe est disponible pour vous accompagner.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-6 mb-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-file-contract fa-3x text-warning mb-3"></i>
+                        <h5 class="card-title">Contrats transparents</h5>
+                        <p class="card-text small">Pas de frais cachés, tout est clair dès le début.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-6 mb-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-home fa-3x text-info mb-3"></i>
+                        <h5 class="card-title">Large choix</h5>
+                        <p class="card-text small">Des centaines de logements disponibles.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Appel à l'action -->
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h2 class="h3 mb-3">Prêt à trouver votre logement idéal ?</h2>
+                <p class="text-muted mb-4">
+                    Rejoignez des centaines de clients satisfaits et trouvez le logement 
+                    parfait pour vous et votre famille.
+                </p>
+                <div class="d-flex justify-content-center gap-3">
+                    {% if not user.is_authenticated %}
+                    <a href="{% url 'register' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-user-plus"></i> Créer un compte gratuit
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'catalogue' %}" class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-search"></i> Voir les logements
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

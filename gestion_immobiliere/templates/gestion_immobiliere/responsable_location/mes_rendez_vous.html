@@ -1,0 +1,396 @@
+<!-- gestion_immobiliere/templates/gestion_immobiliere/responsable_location/mes_rendez_vous.html -->
+{% extends 'gestion_immobiliere/base.html' %}
+
+{% block title %}Mes rendez-vous - TECH IIBS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .rdv-card {
+        border-left: 4px solid #0d6efd;
+        transition: transform 0.2s;
+    }
+    .rdv-card:hover {
+        transform: translateY(-3px);
+    }
+    .rdv-card.today {
+        border-left-color: #28a745;
+        background-color: #f0fff4;
+    }
+    .rdv-card.passed {
+        border-left-color: #6c757d;
+        opacity: 0.8;
+    }
+    .rdv-card.cancelled {
+        border-left-color: #dc3545;
+        background-color: #fff5f5;
+    }
+    .time-badge {
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
+    }
+    .calendar-day {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #0d6efd;
+        color: white;
+        font-weight: bold;
+    }
+    .calendar-day .day-number {
+        font-size: 1.5rem;
+        line-height: 1;
+    }
+    .calendar-day .month {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-0">
+                        <i class="fas fa-calendar-alt text-primary"></i> Mes rendez-vous
+                    </h1>
+                    <p class="text-muted mb-0">
+                        {{ rendez_vous_a_venir.count }} rendez-vous à venir
+                        {% if rendez_vous_aujourdhui.count > 0 %}
+                        • {{ rendez_vous_aujourdhui.count }} aujourd'hui
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    <a href="{% url 'traiter_demandes' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-list"></i> Voir les demandes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rendez-vous d'aujourd'hui -->
+    {% if rendez_vous_aujourdhui.count > 0 %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-day"></i> Aujourd'hui ({{ aujourdhui|date:"d/m/Y" }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for rdv in rendez_vous_aujourdhui %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card rdv-card today">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                            <h6 class="mb-1">{{ rdv.demande_location.client.nom_complet }}</h6>
+                                            <p class="text-muted small mb-0">
+                                                {{ rdv.demande_location.logement.reference }}
+                                            </p>
+                                        </div>
+                                        <span class="badge bg-success time-badge">
+                                            {{ rdv.date_rendez_vous|time:"H:i" }}
+                                        </span>
+                                    </div>
+                                    
+                                    <p class="small mb-2">
+                                        <i class="fas fa-map-marker-alt"></i> 
+                                        {{ rdv.lieu|truncatechars:30 }}
+                                    </p>
+                                    
+                                    <p class="small mb-3">
+                                        <i class="fas fa-phone"></i> {{ rdv.contact_client }}
+                                    </p>
+                                    
+                                    <div class="d-flex justify-content-between">
+                                        <span class="badge bg-{% if rdv.statut == 'confirme' %}success{% else %}warning{% endif %}">
+                                            {{ rdv.get_statut_display }}
+                                        </span>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'detail_rendez_vous' rdv.pk %}" 
+                                               class="btn btn-outline-info">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if rdv.statut != 'confirme' %}
+                                            <a href="{% url 'confirmer_rendez_vous' rdv.pk %}" 
+                                               class="btn btn-outline-success">
+                                                <i class="fas fa-check"></i>
+                                            </a>
+                                            {% endif %}
+                                            {% if rdv.peut_etre_annule %}
+                                            <a href="{% url 'annuler_rendez_vous' rdv.pk %}" 
+                                               class="btn btn-outline-danger">
+                                                <i class="fas fa-times"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Rendez-vous à venir -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-week"></i> Rendez-vous à venir
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if rendez_vous_a_venir %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Client</th>
+                                    <th>Logement</th>
+                                    <th>Lieu</th>
+                                    <th>Contact</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for rdv in rendez_vous_a_venir %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="calendar-day me-3">
+                                                <div class="day-number">{{ rdv.date_rendez_vous|date:"d" }}</div>
+                                                <div class="month">{{ rdv.date_rendez_vous|date:"M" }}</div>
+                                            </div>
+                                            <div>
+                                                <div>{{ rdv.date_rendez_vous|date:"l" }}</div>
+                                                <div class="text-muted small">{{ rdv.date_rendez_vous|time:"H:i" }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>{{ rdv.demande_location.client.nom_complet }}</div>
+                                        <div class="text-muted xsmall">{{ rdv.contact_client }}</div>
+                                    </td>
+                                    <td>
+                                        <div>{{ rdv.demande_location.logement.reference }}</div>
+                                        <div class="text-muted xsmall">{{ rdv.demande_location.logement.zone.nom }}</div>
+                                    </td>
+                                    <td>{{ rdv.lieu|truncatechars:30 }}</td>
+                                    <td>{{ rdv.contact_client }}</td>
+                                    <td>
+                                        {% if rdv.statut == 'planifie' %}
+                                        <span class="badge bg-warning">Planifié</span>
+                                        {% elif rdv.statut == 'confirme' %}
+                                        <span class="badge bg-success">Confirmé</span>
+                                        {% elif rdv.statut == 'effectue' %}
+                                        <span class="badge bg-info">Effectué</span>
+                                        {% endif %}
+                                        
+                                        {% if rdv.est_passe %}
+                                        <span class="badge bg-danger small">Passé</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="                                                <a href="{% url 'detail_rendez_vous' rdv.pk %}" 
+                                                   class="btn btn-outline-info" title="Détails">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                {% if rdv.statut == 'planifie' %}
+                                                <a href="{% url 'confirmer_rendez_vous' rdv.pk %}" 
+                                                   class="btn btn-outline-success" title="Confirmer">
+                                                    <i class="fas fa-check"></i>
+                                                </a>
+                                                {% endif %}
+                                                {% if rdv.peut_etre_annule %}
+                                                <a href="{% url 'annuler_rendez_vous' rdv.pk %}" 
+                                                   class="btn btn-outline-danger" title="Annuler">
+                                                    <i class="fas fa-times"></i>
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        {% if is_paginated %}
+                        <div class="card-footer">
+                            <nav aria-label="Pagination">
+                                <ul class="pagination justify-content-center mb-0">
+                                    {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1">
+                                            <i class="fas fa-angle-double-left"></i>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                                            <i class="fas fa-angle-left"></i>
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    
+                                    {% for num in page_obj.paginator.page_range %}
+                                        {% if page_obj.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                        </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                                            <i class="fas fa-angle-right"></i>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">
+                                            <i class="fas fa-angle-double-right"></i>
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                        {% endif %}
+                        
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-calendar-check fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Aucun rendez-vous à venir</h5>
+                            <p class="text-muted">Vous n'avez pas de rendez-vous planifiés.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Calendrier (optionnel) -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-calendar"></i> Calendrier du mois
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for jour in jours_du_mois %}
+                            <div class="col-md-2 col-lg-1 col-sm-3 col-4 mb-3">
+                                <div class="text-center">
+                                    <div class="calendar-day {% if jour.aujourdhui %}bg-success{% elif jour.avec_rdv %}bg-primary{% else %}bg-light text-dark{% endif %}">
+                                        <div class="day-number">{{ jour.date|date:"j" }}</div>
+                                        <div class="month">{{ jour.date|date:"M" }}</div>
+                                    </div>
+                                    {% if jour.avec_rdv %}
+                                    <div class="mt-1">
+                                        <span class="badge bg-info">{{ jour.nombre_rdv }} RDV</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mt-3">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <span class="badge bg-primary me-2">■</span> Avec rendez-vous
+                                </div>
+                                <div class="col-md-4">
+                                    <span class="badge bg-success me-2">■</span> Aujourd'hui
+                                </div>
+                                <div class="col-md-4">
+                                    <span class="badge bg-light me-2 text-dark">■</span> Sans rendez-vous
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialiser les tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+        
+        // Filtrer par date
+        const filterDate = document.getElementById('filterDate');
+        if (filterDate) {
+            filterDate.addEventListener('change', function() {
+                window.location.href = '?date=' + this.value;
+            });
+        }
+        
+        // Confirmer un rendez-vous
+        document.querySelectorAll('.btn-confirm-rdv').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                if (!confirm('Confirmer ce rendez-vous ?')) {
+                    e.preventDefault();
+                }
+            });
+        });
+        
+        // Annuler un rendez-vous
+        document.querySelectorAll('.btn-cancel-rdv').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                const reason = prompt('Motif d\'annulation :');
+                if (reason === null) {
+                    e.preventDefault();
+                } else if (reason.trim() === '') {
+                    alert('Veuillez indiquer un motif d\'annulation.');
+                    e.preventDefault();
+                } else {
+                    // Ajouter le motif dans un champ caché
+                    const form = this.closest('form');
+                    if (form) {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'motif_annulation';
+                        input.value = reason;
+                        form.appendChild(input);
+                    }
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,17 @@
+# Django et extensions
+Django>=4.2,<5.0
+django-widget-tweaks>=1.4.12
+
+# Base de données
+psycopg2-binary>=2.9.9
+
+# Configuration
+python-decouple>=3.8
+
+# Utilitaires
+python-dateutil>=2.8.2
+Pillow>=10.0.0
+
+# Validators
+django-cleanup>=8.0.0
+
