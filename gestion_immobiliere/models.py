@@ -170,6 +170,20 @@ class Logement(models.Model):
         """Prix de base du loyer (sans forfait agence)"""
         # Cette logique sera calculée dans ContratGestion
         return Decimal('0.00')
+
+    @property
+    def contrat_gestion(self):
+        """
+        Compatibilité: retourne le contrat de gestion courant.
+        Priorité au contrat en cours, sinon le plus récent.
+        """
+        ContratGestionModel = self._meta.apps.get_model('gestion_immobiliere', 'ContratGestion')
+        contrat = self.contrats_gestion.filter(etat='en_cours').order_by('-date_debut').first()
+        if not contrat:
+            contrat = self.contrats_gestion.order_by('-date_creation').first()
+        if not contrat:
+            raise ContratGestionModel.DoesNotExist
+        return contrat
     
     def save(self, *args, **kwargs):
         # Générer une référence si vide
@@ -226,11 +240,11 @@ class ContratGestion(models.Model):
         ('en_attente', 'En attente de signature'),
     ]
     
-    logement = models.OneToOneField(
+    logement = models.ForeignKey(
         Logement,
         on_delete=models.CASCADE,
         verbose_name="Logement",
-        related_name='contrat_gestion'
+        related_name='contrats_gestion'
     )
     proprietaire = models.ForeignKey(
         Proprietaire,
@@ -266,6 +280,13 @@ class ContratGestion(models.Model):
         verbose_name = "Contrat de gestion"
         verbose_name_plural = "Contrats de gestion"
         ordering = ['-date_creation']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['logement'],
+                condition=models.Q(etat='en_cours'),
+                name='unique_contrat_gestion_en_cours_par_logement'
+            ),
+        ]
         indexes = [
             models.Index(fields=['etat']),
             models.Index(fields=['date_debut', 'date_fin']),

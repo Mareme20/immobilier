@@ -124,32 +124,7 @@ class SearchForm(forms.Form):
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'})
     )
-    
 
-
-# Ajouter ces formulaires à forms.py
-class UserUpdateForm(forms.ModelForm):
-    """Formulaire pour mettre à jour l'utilisateur"""
-    class Meta:
-        model = User
-        fields = ['first_name', 'last_name', 'email']
-        widgets = {
-            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
-        }
-
-class ProfileUpdateForm(forms.ModelForm):
-    """Formulaire pour mettre à jour le profil"""
-    class Meta:
-        model = Profile
-        fields = ['telephone', 'adresse', 'date_naissance', 'avatar']
-        widgets = {
-            'telephone': forms.TextInput(attrs={'class': 'form-control'}),
-            'adresse': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'date_naissance': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'avatar': forms.FileInput(attrs={'class': 'form-control'}),
-        }
     surface_min = forms.DecimalField(
         required=False,
         min_value=0,
@@ -200,6 +175,32 @@ class ProfileUpdateForm(forms.ModelForm):
         initial='date_creation',
         widget=forms.Select(attrs={'class': 'form-select'})
     )
+
+
+# Ajouter ces formulaires à forms.py
+class UserUpdateForm(forms.ModelForm):
+    """Formulaire pour mettre à jour l'utilisateur"""
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email']
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+        }
+
+
+class ProfileUpdateForm(forms.ModelForm):
+    """Formulaire pour mettre à jour le profil"""
+    class Meta:
+        model = Profile
+        fields = ['telephone', 'adresse', 'date_naissance', 'avatar']
+        widgets = {
+            'telephone': forms.TextInput(attrs={'class': 'form-control'}),
+            'adresse': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'date_naissance': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'avatar': forms.FileInput(attrs={'class': 'form-control'}),
+        }
  
 class LogementForm(forms.ModelForm):
     """Formulaire pour ajouter/modifier un logement"""
@@ -276,9 +277,9 @@ class ContratGestionForm(forms.ModelForm):
             pass
         else:
             # En mode création, on ne montre que les logements sans contrat actif
-            self.fields['logement'].queryset = Logement.objects.filter(
-                contrat_gestion__isnull=True
-            )
+            self.fields['logement'].queryset = Logement.objects.exclude(
+                contrats_gestion__etat='en_cours'
+            ).distinct()
 
 class ZoneForm(forms.ModelForm):
     """Formulaire pour les zones"""

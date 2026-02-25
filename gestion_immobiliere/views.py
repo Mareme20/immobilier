@@ -1,20 +1,15 @@
 # gestion_immobiliere/views.py
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from .forms import UserRegistrationForm, LoginForm
-from .utils import role_required
-from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
-from django.db.models import Q, F, Value, CharField
-from django.db.models.functions import Concat
+from django.db.models import Q, F
 from .models import Logement, Zone, ImageLogement, ContratGestion
 from .forms import SearchForm, UserUpdateForm, ProfileUpdateForm, ProprietaireForm, UserForm, ProfileForm
-import math
 from django.utils import timezone
-
-from django.shortcuts import render, redirect
+from django.http import JsonResponse
 from django.contrib.auth.views import PasswordChangeView
 import logging
 from django.urls import reverse_lazy
@@ -35,7 +30,7 @@ def home(request):
     for logement in logements_vedette:
         try:
             contrat = logement.contrat_gestion
-            logement.prix_mensuel = contrat.montant_mensuel + logement.zone.forfait_agence
+            logement.prix_mensuel = contrat.prix_loyer_total
         except:
             logement.prix_mensuel = None
     
@@ -106,7 +101,6 @@ def logout_view(request):
 
 @login_required
 def dashboard(request):
-    print(f"DEBUG: User={request.user.username}, Role={request.user.profile.role}")
     """Tableau de bord selon le rôle"""
     user_role = request.user.profile.role
     
@@ -490,12 +484,12 @@ def catalogue(request):
             
             if prix_min:
                 contrats_actifs = contrats_actifs.annotate(
-                    prix_total=F('montant_mensuel') + F('logement__zone__forfait_agence')
+                    prix_total=F('montant_mensuel') + F('logement__zone__forfait_agence') + F('logement__caution_fixe')
                 ).filter(prix_total__gte=prix_min)
             
             if prix_max:
                 contrats_actifs = contrats_actifs.annotate(
-                    prix_total=F('montant_mensuel') + F('logement__zone__forfait_agence')
+                    prix_total=F('montant_mensuel') + F('logement__zone__forfait_agence') + F('logement__caution_fixe')
                 ).filter(prix_total__lte=prix_max)
             
             # Filtrer les logements ayant un contrat actif correspondant
@@ -506,12 +500,12 @@ def catalogue(request):
         order_by = form.cleaned_data.get('order_by', 'date_creation')
         if order_by == 'prix':
             # Trier par prix via annotation
-            queryset = queryset.annotate(
-                prix_total=F('contrat_gestion__montant_mensuel') + F('zone__forfait_agence')
+            queryset = queryset.filter(contrats_gestion__etat='en_cours').annotate(
+                prix_total=F('contrats_gestion__montant_mensuel') + F('zone__forfait_agence') + F('caution_fixe')
             ).order_by('prix_total')
         elif order_by == '-prix':
-            queryset = queryset.annotate(
-                prix_total=F('contrat_gestion__montant_mensuel') + F('zone__forfait_agence')
+            queryset = queryset.filter(contrats_gestion__etat='en_cours').annotate(
+                prix_total=F('contrats_gestion__montant_mensuel') + F('zone__forfait_agence') + F('caution_fixe')
             ).order_by('-prix_total')
         else:
             queryset = queryset.order_by(order_by)
@@ -525,7 +519,7 @@ def catalogue(request):
     for logement in page_obj.object_list:
         try:
             contrat = logement.contrat_gestion
-            logement.prix_mensuel = contrat.montant_mensuel + logement.zone.forfait_agence
+            logement.prix_mensuel = contrat.prix_loyer_total
             logement.prix_formatted = f"{logement.prix_mensuel:.2f}"
         except ContratGestion.DoesNotExist:
             logement.prix_mensuel = None
@@ -541,22 +535,17 @@ def catalogue(request):
     
     return render(request, 'gestion_immobiliere/catalogue/catalogue.html', context)
 def logement_detail(request, reference):
-    # TEST DE DIAGNOSTIC
-    tous_les_logements = Logement.objects.all().values_list('reference', 'etat')
-    print(f"Référence cherchée : '{reference}'")
-    print(f"Logements en BDD : {list(tous_les_logements)}")
-    
-    # Version ultra-simplifiée pour tester
     logement = get_object_or_404(Logement, reference=reference)
-    # ... reste du code
 
     # Récupérer les images du logement
     images = ImageLogement.objects.filter(logement=logement).order_by('ordre')
     
     # Calculer le prix mensuel
     prix_mensuel = None
-    if hasattr(logement, 'contrat_gestion'):
-        prix_mensuel = logement.contrat_gestion.montant_mensuel + logement.zone.forfait_agence
+    try:
+        prix_mensuel = logement.contrat_gestion.prix_loyer_total
+    except ContratGestion.DoesNotExist:
+        prix_mensuel = None
     
     # --- CORRECTION ICI ---
     # On utilise .exclude() pour retirer le logement actuel de la liste
@@ -572,13 +561,9 @@ def logement_detail(request, reference):
     # Annoter le prix pour les logements similaires
     for sim_logement in logements_similaires:
         try:
-            # Utilisation de hasattr pour plus de sécurité en 2026
-            if hasattr(sim_logement, 'contrat_gestion'):
-                contrat = sim_logement.contrat_gestion
-                sim_logement.prix_mensuel = contrat.montant_mensuel + sim_logement.zone.forfait_agence
-            else:
-                sim_logement.prix_mensuel = None
-        except Exception:
+            contrat = sim_logement.contrat_gestion
+            sim_logement.prix_mensuel = contrat.prix_loyer_total
+        except ContratGestion.DoesNotExist:
             sim_logement.prix_mensuel = None
     
     context = {
@@ -625,12 +610,19 @@ def demander_visite(request, reference):
 
             date_visite = request.POST.get('date_visite')
             message = request.POST.get('message', '')
+            from datetime import datetime
+            date_debut = timezone.now().date()
+            if date_visite:
+                try:
+                    date_debut = datetime.strptime(date_visite, "%Y-%m-%d").date()
+                except ValueError:
+                    pass
             
             DemandeLocation.objects.create(
                 client=client,
                 logement=logement,
-                date_debut_souhaitee=timezone.now().date(),
-                duree_souhaitee=12,
+                date_debut_souhaitee=date_debut,
+                duree_souhaitee=1,
                 notes=f"Demande de visite le {date_visite}. Message: {message}"
             )
             
@@ -645,29 +637,6 @@ def demander_visite(request, reference):
     }
     
     return render(request, 'gestion_immobiliere/catalogue/demander_visite.html', context)
-
-
-
-
-# Ajouter à la fin de gestion_immobiliere/views.py
-
-# ===== VUES DE GESTION =====
-
-@login_required
-def gerer_logements(request):
-    """Gestion des logements (gestionnaire)"""
-    if request.user.profile.role != 'gestionnaire':
-        messages.error(request, 'Accès réservé aux gestionnaires.')
-        return redirect('dashboard')
-    
-    logements = Logement.objects.all().select_related(
-        'zone', 'proprietaire__profile__user'
-    ).order_by('-date_creation')
-    
-    context = {
-        'logements': logements,
-    }
-    return render(request, 'gestion_immobiliere/gestion/gerer_logements.html', context)
 
 @login_required
 def gerer_contrats_gestion(request):
@@ -754,13 +723,6 @@ class CustomPasswordChangeView(PasswordChangeView):
     def form_valid(self, form):
         messages.success(self.request, 'Votre mot de passe a été changé avec succès!')
         return super().form_valid(form)
-
-
-
-# Ajouter à gestion_immobiliere/views.py
-
-from django.urls import reverse
-from django.http import HttpResponseRedirect
 from .forms import LogementForm, ImageLogementFormSet, ContratGestionForm, ZoneForm
  
 @login_required
@@ -1530,3 +1492,9 @@ def confirmer_rendez_vous(request, rendez_vous_id):
     # envoyer_notification_confirmation(rendez_vous)
     
     return redirect('mes_rendez_vous')
+
+
+@login_required
+def api_dashboard_alertes(request):
+    """Endpoint léger pour éviter les 404 côté dashboard."""
+    return JsonResponse({'alertes': []})

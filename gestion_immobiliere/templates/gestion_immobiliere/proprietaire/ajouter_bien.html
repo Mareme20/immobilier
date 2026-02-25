@@ -1,0 +1,59 @@
+{% extends 'gestion_immobiliere/base.html' %}
+
+{% block title %}{{ title }} - TECH IIBS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12 d-flex align-items-center">
+            <a href="{% url 'mes_biens' %}" class="btn btn-outline-secondary me-3">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <h1 class="h3 mb-0">{{ title }}</h1>
+        </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="card p-4">
+        {% csrf_token %}
+
+        <h5 class="mb-3">Informations du bien</h5>
+        <div class="row g-3">
+            <div class="col-md-6">{{ form.type_logement.label_tag }}{{ form.type_logement }}</div>
+            <div class="col-md-6">{{ form.reference.label_tag }}{{ form.reference }}</div>
+            <div class="col-md-6">{{ form.surface.label_tag }}{{ form.surface }}</div>
+            <div class="col-md-6">{{ form.caution_fixe.label_tag }}{{ form.caution_fixe }}</div>
+            <div class="col-md-6">{{ form.zone.label_tag }}{{ form.zone }}</div>
+            <div class="col-md-6">{{ form.proprietaire.label_tag }}{{ form.proprietaire }}</div>
+            <div class="col-12">{{ form.adresse.label_tag }}{{ form.adresse }}</div>
+            <div class="col-12">{{ form.description.label_tag }}{{ form.description }}</div>
+            <div class="col-md-6">{{ form.etat.label_tag }}{{ form.etat }}</div>
+        </div>
+
+        <hr class="my-4">
+        <h5 class="mb-3">Images</h5>
+        {{ formset.management_form }}
+        {% for image_form in formset %}
+        <div class="border rounded p-3 mb-3">
+            <div class="row g-3">
+                <div class="col-md-8">{{ image_form.image.label_tag }}{{ image_form.image }}</div>
+                <div class="col-md-4">{{ image_form.ordre.label_tag }}{{ image_form.ordre }}</div>
+            </div>
+            {% if image_form.instance.pk %}
+            <div class="mt-2">
+                <img src="{{ image_form.instance.image.url }}" alt="Image" class="img-thumbnail" style="max-height: 120px;">
+            </div>
+            {% endif %}
+            {% if image_form.DELETE %}
+            <div class="form-check mt-2">{{ image_form.DELETE }} <label class="form-check-label" for="{{ image_form.DELETE.id_for_label }}">Supprimer</label></div>
+            {% endif %}
+            {{ image_form.id }}
+        </div>
+        {% endfor %}
+
+        <div class="d-flex gap-2 mt-3">
+            <button class="btn btn-primary" type="submit">Enregistrer</button>
+            <a class="btn btn-outline-secondary" href="{% url 'mes_biens' %}">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

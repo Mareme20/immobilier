@@ -47,12 +47,12 @@ def catalogue(request):
             
             if prix_min:
                 contrats_actifs = contrats_actifs.annotate(
-                    prix_total=F('montant_mensuel') + F('logement__zone__forfait_agence')
+                    prix_total=F('montant_mensuel') + F('logement__zone__forfait_agence') + F('logement__caution_fixe')
                 ).filter(prix_total__gte=prix_min)
             
             if prix_max:
                 contrats_actifs = contrats_actifs.annotate(
-                    prix_total=F('montant_mensuel') + F('logement__zone__forfait_agence')
+                    prix_total=F('montant_mensuel') + F('logement__zone__forfait_agence') + F('logement__caution_fixe')
                 ).filter(prix_total__lte=prix_max)
             
             # Filtrer les logements ayant un contrat actif correspondant
@@ -62,13 +62,13 @@ def catalogue(request):
         # Trier les résultats
         order_by = form.cleaned_data.get('order_by', 'date_creation')
         if order_by == 'prix':
-            # Trier par prix via annotation
-            queryset = queryset.annotate(
-                prix_total=F('contrat_gestion__montant_mensuel') + F('zone__forfait_agence')
+            # Trier par prix via contrat de gestion actif
+            queryset = queryset.filter(contrats_gestion__etat='en_cours').annotate(
+                prix_total=F('contrats_gestion__montant_mensuel') + F('zone__forfait_agence') + F('caution_fixe')
             ).order_by('prix_total')
         elif order_by == '-prix':
-            queryset = queryset.annotate(
-                prix_total=F('contrat_gestion__montant_mensuel') + F('zone__forfait_agence')
+            queryset = queryset.filter(contrats_gestion__etat='en_cours').annotate(
+                prix_total=F('contrats_gestion__montant_mensuel') + F('zone__forfait_agence') + F('caution_fixe')
             ).order_by('-prix_total')
         else:
             queryset = queryset.order_by(order_by)
@@ -82,7 +82,7 @@ def catalogue(request):
     for logement in page_obj.object_list:
         try:
             contrat = logement.contrat_gestion
-            logement.prix_mensuel = contrat.montant_mensuel + logement.zone.forfait_agence
+            logement.prix_mensuel = contrat.prix_loyer_total
             logement.prix_formatted = f"{logement.prix_mensuel:.2f}"
         except ContratGestion.DoesNotExist:
             logement.prix_mensuel = None
@@ -102,9 +102,8 @@ def logement_detail(request, reference):
     """Détails d'un logement spécifique"""
     logement = get_object_or_404(
         Logement.objects.select_related(
-            'zone', 
+            'zone',
             'proprietaire__profile__user',
-            'contrat_gestion'
         ),
         reference=reference,
         etat='disponible'
@@ -115,13 +114,16 @@ def logement_detail(request, reference):
     
     # Calculer le prix mensuel
     prix_mensuel = None
-    if hasattr(logement, 'contrat_gestion'):
-        prix_mensuel = logement.contrat_gestion.montant_mensuel + logement.zone.forfait_agence
+    try:
+        prix_mensuel = logement.contrat_gestion.prix_loyer_total
+    except ContratGestion.DoesNotExist:
+        prix_mensuel = None
     
     # Logements similaires (même type ou même zone)
     logements_similaires = Logement.objects.filter(
-        etat='disponible',
-        id__ne=logement.id
+        etat='disponible'
+    ).exclude(
+        id=logement.id
     ).filter(
         Q(type_logement=logement.type_logement) | Q(zone=logement.zone)
     )[:4]
@@ -130,7 +132,7 @@ def logement_detail(request, reference):
     for sim_logement in logements_similaires:
         try:
             contrat = sim_logement.contrat_gestion
-            sim_logement.prix_mensuel = contrat.montant_mensuel + sim_logement.zone.forfait_agence
+            sim_logement.prix_mensuel = contrat.prix_loyer_total
         except ContratGestion.DoesNotExist:
             sim_logement.prix_mensuel = None
     

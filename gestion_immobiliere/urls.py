@@ -2,7 +2,6 @@
 from django.urls import path
 from . import views
 from .views import CustomPasswordChangeView
-from django.contrib.auth import views as auth_views
 urlpatterns = [
     # Pages publiques
     path('', views.home, name='home'),
@@ -16,15 +15,13 @@ urlpatterns = [
          CustomPasswordChangeView.as_view(), 
          name='change_password'),
     
-     # Vues de gestion
+    # Vues de gestion
     path('gestion/logements/', views.gerer_logements, name='gerer_logements'),
     path('gestion/contrats-gestion/', views.gerer_contrats_gestion, name='gerer_contrats_gestion'),
     path('proprietaire/mes-biens/', views.mes_biens, name='mes_biens'),
     path('responsable-location/traiter-demandes/', views.traiter_demandes, name='traiter_demandes'),
-    
 
-     # Vues de gestion (gestionnaire)
-    path('gestion/logements/', views.gerer_logements, name='gerer_logements'),
+    # Vues de gestion (gestionnaire)
 # CRUD Logements
     path('gestion/logements/ajouter/', views.ajouter_logement, name='ajouter_logement'),
     path('gestion/logements/<int:pk>/modifier/', views.modifier_logement, name='modifier_logement'),
@@ -53,10 +50,9 @@ urlpatterns = [
     path('catalogue/<str:reference>/', views.logement_detail, name='logement_detail'),
     path('catalogue/<str:reference>/visite/', views.demander_visite, name='demander_visite'),
     
-    # Vues protégées (à implémenter)
+    # Vues protégées
     path('mes-demandes/', views.mes_demandes, name='mes_demandes'),
     path('mes-contrats/', views.mes_contrats, name='mes_contrats'),
-    path('mon-profil/', views.mon_profil, name='mon_profil'),
 
  
     # Propriétaires
@@ -85,4 +81,6 @@ urlpatterns = [
          views.annuler_rendez_vous, name='annuler_rendez_vous'),
     path('responsable-location/rendez-vous/<int:rendez_vous_id>/confirmer/', 
          views.confirmer_rendez_vous, name='confirmer_rendez_vous'),
+    path('api/dashboard/alertes', views.api_dashboard_alertes, name='api_dashboard_alertes'),
+    path('api/dashboard/alertes/', views.api_dashboard_alertes, name='api_dashboard_alertes_slash'),
 ]
